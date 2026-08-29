@@ -107,44 +107,50 @@ The `authUser` middleware:
 2. Returns `401` if no token is present.
 3. Checks whether the token has been blacklisted by querying the blacklist
    collection; returns `401` if it has.
-4. Verifies the token with `jwt.verify(token, JWT_SECRET)`.
-5. Looks up the user via `userModel.findById(decoded._id)`.
-6. Returns `401` if the user no longer exists.
-7. Attaches the user to `req.user` and calls `next()`.
+4. Verifies the token with `jwt.verify(token, JWT_SECRET)` and rejects it if
+   the payload `role` is not `"user"`.
+5. Attaches `req.userId = decoded._id` (no database lookup — the identity comes
+   from the signed JWT itself) and calls `next()`.
 
 ### 3. Controller Layer — `backend/controllers/user.controller.js`
 
-The `getUserProfile` controller simply echoes the authenticated user back:
+The `getUserProfile` controller fetches the fresh record by the verified id:
 
 ```js
 module.exports.getUserProfile = async (req, res, next) => {
-  res.status(200).json(req.user);
+  try {
+    const user = await userModel.findById(req.userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    res.status(200).json(user);
+  } catch (err) {
+    next(err);
+  }
 };
 ```
 
 ## Authentication Flow Diagram
 
 ```
-Client                Middleware (authUser)         Model             Controller
-  │                         │                         │                   │
-  │  GET /users/profile     │                         │                   │
-  │  Authorization: Bearer  │                         │                   │
-  │────────────────────────>│                         │                   │
-  │                         │  token present?         │                   │
-  │                         │  jwt.verify(token)      │                   │
-  │                         │                         │                   │
-  │                         │  findById(decoded._id)  │                   │
-  │                         │────────────────────────>│                   │
-  │                         │                         │                   │
-  │                         │  user returned          │                   │
-  │                         │<────────────────────────│                   │
-  │                         │                         │                   │
-  │                         │  req.user = user        │ getUserProfile    │
-  │                         │─────────────────────────────────────────>   │
-  │                         │                         │                   │
-  │  { ...user }            │                         │                   │
-  │<────────────────────────│                         │                   │
-```
+Client                Middleware (authUser)           Controller          Model
+  │                         │                             │                  │
+  │  GET /users/profile     │                             │                  │
+  │  Authorization: Bearer  │                             │                  │
+  │────────────────────────>│                             │                  │
+  │                         │  token present?             │                  │
+  │                         │  jwt.verify(token)          │                  │
+  │                         │                             │                  │
+  │                         │  req.userId = decoded._id   │                  │
+  │                         │────────────────────────────>│                  │
+  │                         │                             │  findById(userId)│
+  │                         │                             │─────────────────>│
+  │                         │                             │                  │
+  │                         │                             │  user returned    │
+  │                         │                             │<─────────────────│
+  │                         │ 200 { user }                │                  │
+  │<──────────────────────────────────────────────────────│                  │
+  ```
 
 ## Security Considerations
 

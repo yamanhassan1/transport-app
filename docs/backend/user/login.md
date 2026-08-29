@@ -153,7 +153,8 @@ The `loginUser` controller:
 5. Calls `user.comparePassword(password)` to verify the bcrypt hash.
 6. Returns `401` if the password does not match.
 7. Issues a JWT via `user.generateAuthToken()`.
-8. Sets the token as an `httpOnly` `token` cookie and clears `user.password`.
+8. Stores the token as an `httpOnly` `token` cookie (24h) and clears
+   `user.password`.
 9. Responds with `200` containing `{ token, user }`.
 
 ### 3. Model Layer — `backend/models/user.model.js`

@@ -10,6 +10,7 @@ and bcrypt password hashing.
 - **MongoDB + Mongoose** — data models (User, Captain, Ride, BlacklistToken)
 - **JWT + bcrypt** — authentication and password hashing
 - **express-validator** — request validation
+- **helmet + express-rate-limit** — security headers and rate limiting
 
 ## Authentication
 
@@ -56,8 +57,23 @@ npm install
 npm start        # runs nodemon server.js
 ```
 
-Set up the environment in `backend/.env` (MongoDB URI and JWT secret), then the
-server runs on `http://localhost:3000`.
+Set up the environment in `backend/.env`:
+
+```env
+PORT=3000
+MONGO_URI=mongodb://localhost:27017/transport-app
+JWT_SECRET=a_long_random_secret
+CORS_ORIGINS=http://localhost:5173,http://localhost:3001
+```
+
+- `MONGO_URI` — MongoDB connection string.
+- `JWT_SECRET` — secret used to sign/verify JWTs.
+- `CORS_ORIGINS` — comma-separated allow-listed origins. If unset, CORS
+  reflects any origin (dev only; set this in production).
+
+Then the server runs on `http://localhost:3000`. Safe production deployment
+should also set `NODE_ENV=production` (enables secure cookies) and place the
+app behind HTTPS.
 
 ## Documentation
 
@@ -70,6 +86,10 @@ flow diagrams) lives in [`docs/backend`](docs/backend):
 ## Project Status
 
 Backend user and captain registration, login, profile, and logout are
-implemented with schema-aligned validation and error handling. Ride
-functionality (model only, [`backend/models/ride.model.js`](backend/models/ride.model.js))
-is stubbed and not yet exposed via routes.
+implemented with schema-aligned validation and error handling. Auth is
+stateless (JWT verified without a per-request DB lookup), tokens are revoked
+via a self-expiring blacklist, all routes are rate-limited, security headers
+and a CORS allow-list are applied, and shared config is centralized in
+`backend/config/constants.js`. Ride functionality (model only,
+[`backend/models/ride.model.js`](backend/models/ride.model.js)) is stubbed and
+not yet exposed via routes.

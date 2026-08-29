@@ -118,44 +118,49 @@ The `authCaptain` middleware:
 2. Returns `401` if no token is present.
 3. Checks whether the token has been blacklisted by querying the
    `BlacklistToken` collection; returns `401` if it has.
-4. Verifies the token with `jwt.verify(token, JWT_SECRET)`.
-5. Looks up the captain via `captainModel.findById(decoded._id)`.
-6. Returns `401` if the captain no longer exists.
-7. Attaches the captain to `req.captain` and calls `next()`.
+4. Verifies the token with `jwt.verify(token, JWT_SECRET)` and rejects it if
+   the payload `role` is not `"captain"`.
+5. Attaches `req.captainId = decoded._id` (no database lookup — the identity
+   comes from the signed JWT itself) and calls `next()`.
 
 ### 3. Controller Layer — `backend/controllers/captain.controller.js`
 
-The `getCaptainProfile` controller simply echoes the authenticated captain
-back:
+The `getCaptainProfile` controller fetches the fresh record by the verified id:
 
 ```js
 module.exports.getCaptainProfile = async (req, res, next) => {
-  res.status(200).json(req.captain);
+  try {
+    const captain = await captainModel.findById(req.captainId);
+    if (!captain) {
+      return res.status(404).json({ message: "Captain not found" });
+    }
+    res.status(200).json(captain);
+  } catch (err) {
+    next(err);
+  }
 };
 ```
 
 ## Authentication Flow Diagram
 
 ```
-Client                  Middleware (authCaptain)       Model             Controller
-  │                         │                         │                   │
-  │  GET /captains/profile  │                         │                   │
-  │  Authorization: Bearer  │                         │                   │
-  │────────────────────────>│                         │                   │
-  │                         │  token present?         │                   │
-  │                         │  jwt.verify(token)      │                   │
-  │                         │                         │                   │
-  │                         │  findById(decoded._id)  │                   │
-  │                         │────────────────────────>│                   │
-  │                         │                         │                   │
-  │                         │  captain returned       │                   │
-  │                         │<────────────────────────│                   │
-  │                         │                         │                   │
-  │                         │  req.captain = captain  │ getCaptainProfile │
-  │                         │───────────────────────────────────────────>  │
-  │                         │                         │                   │
-  │  { ...captain }         │                         │                   │
-  │<────────────────────────│                         │                   │
+Client                  Middleware (authCaptain)     Controller            Model
+  │                         │                             │                  │
+  │  GET /captains/profile  │                             │                  │
+  │  Authorization: Bearer  │                             │                  │
+  │────────────────────────>│                             │                  │
+  │                         │  token present?             │                  │
+  │                         │  jwt.verify(token)          │                  │
+  │                         │                             │                  │
+  │                         │  req.captainId = decoded._id│                  │
+  │                         │────────────────────────────>│                  │
+  │                         │                             │  findById(id)    │
+  │                         │                             │─────────────────>│
+  │                         │                             │                  │
+  │                         │                             │  captain returned │
+  │                         │                             │<─────────────────│
+  │                         │ 200 { captain }             │                  │
+  │<──────────────────────────────────────────────────────│                  │
 ```
 
 ## Security Considerations

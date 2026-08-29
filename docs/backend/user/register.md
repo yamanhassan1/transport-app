@@ -164,7 +164,8 @@ The `registerUser` controller:
 5. Delegates password hashing to `userModel.hashPassword` (bcrypt, cost 10).
 6. Invokes `userService.createUser` to persist the record.
 7. Issues a JWT via `user.generateAuthToken()`.
-8. Responds with `201` containing `{ token, user }`.
+8. Stores the token in an `httpOnly` `token` cookie (24h) and responds with
+   `201` containing `{ token, user }`.
 
 ### 3. Service Layer — `backend/services/user.service.js`
 

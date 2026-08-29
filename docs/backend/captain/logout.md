@@ -131,11 +131,8 @@ Client                  Middleware (authCaptain)       Model                Cont
   │  Authorization: Bearer  │                         │                         │
   │────────────────────────>│                         │                         │
   │                         │  jwt.verify(token)      │                         │
-  │                         │  findById(decoded._id)  │                         │
-  │                         │────────────────────────>│                         │
-  │                         │                         │                         │
-  │                         │  req.captain = captain  │ logoutCaptain           │
-  │                         │──────────────────────────────────────────────────>│
+  │                         │  req.captainId = decoded._id│ logoutCaptain       │
+  │                         │─────────────────────────────────────────────────>│
   │                         │                         │                         │
   │                         │                         │  create({ token })      │
   │                         │                         │────────────────────────>│

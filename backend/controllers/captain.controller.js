@@ -2,6 +2,7 @@ const CaptainModel = require("../models/captain.model");
 const captainService = require("../services/captain.service");
 const { validationResult } = require("express-validator");
 const blackListTokenModel = require("../models/blacklistToken.model");
+const { ACCESS_TOKEN_TTL_MS } = require("../config/constants");
 
 module.exports.registerCaptain = async (req, res, next) => {
   const errors = validationResult(req);
@@ -42,6 +43,12 @@ module.exports.registerCaptain = async (req, res, next) => {
 
     const token = captain.generateAuthToken();
 
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      maxAge: ACCESS_TOKEN_TTL_MS,
+    });
+
     res.status(201).json({ token, captain });
   } catch (err) {
     next(err);
@@ -76,7 +83,7 @@ module.exports.loginCaptain = async (req, res, next) => {
     res.cookie("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      maxAge: 3600000,
+      maxAge: ACCESS_TOKEN_TTL_MS,
     });
 
     captain.password = undefined;
@@ -88,14 +95,27 @@ module.exports.loginCaptain = async (req, res, next) => {
 };
 
 module.exports.getCaptainProfile = async (req, res, next) => {
-  res.status(200).json(req.captain);
+  try {
+    const captain = await CaptainModel.findById(req.captainId);
+    if (!captain) {
+      return res.status(404).json({ message: "Captain not found" });
+    }
+    res.status(200).json(captain);
+  } catch (err) {
+    next(err);
+  }
 };
 
 module.exports.logoutCaptain = async (req, res, next) => {
-  res.clearCookie("token");
-  const token = req.cookies.token || req.headers.authorization?.split(" ")[1];
+  try {
+    res.clearCookie("token");
+    const token =
+      req.cookies.token || req.headers.authorization?.split(" ")[1];
 
-  await blackListTokenModel.create({ token });
+    await blackListTokenModel.create({ token });
 
-  res.status(200).json({ message: "Logged out successfully" });
+    res.status(200).json({ message: "Logged out successfully" });
+  } catch (err) {
+    next(err);
+  }
 };

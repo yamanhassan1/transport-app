@@ -2,6 +2,7 @@ const userModel = require("../models/user.model");
 const userService = require("../services/user.service");
 const { validationResult } = require("express-validator");
 const blackListTokenModel = require("../models/blacklistToken.model");
+const { ACCESS_TOKEN_TTL_MS } = require("../config/constants");
 
 module.exports.registerUser = async (req, res, next) => {
   const errors = validationResult(req);
@@ -32,6 +33,12 @@ module.exports.registerUser = async (req, res, next) => {
     });
 
     const token = user.generateAuthToken();
+
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      maxAge: ACCESS_TOKEN_TTL_MS,
+    });
 
     res.status(201).json({ token, user });
   } catch (err) {
@@ -67,7 +74,7 @@ module.exports.loginUser = async (req, res, next) => {
     res.cookie("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      maxAge: 3600000,
+      maxAge: ACCESS_TOKEN_TTL_MS,
     });
 
     user.password = undefined;
@@ -79,14 +86,27 @@ module.exports.loginUser = async (req, res, next) => {
 };
 
 module.exports.getUserProfile = async (req, res, next) => {
-  res.status(200).json(req.user);
+  try {
+    const user = await userModel.findById(req.userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    res.status(200).json(user);
+  } catch (err) {
+    next(err);
+  }
 };
 
 module.exports.logoutUser = async (req, res, next) => {
-  res.clearCookie("token");
-  const token = req.cookies.token || req.headers.authorization?.split(" ")[1];
+  try {
+    res.clearCookie("token");
+    const token =
+      req.cookies.token || req.headers.authorization?.split(" ")[1];
 
-  await blackListTokenModel.create({ token });
+    await blackListTokenModel.create({ token });
 
-  res.status(200).json({ message: "Logged out successfully" });
+    res.status(200).json({ message: "Logged out successfully" });
+  } catch (err) {
+    next(err);
+  }
 };

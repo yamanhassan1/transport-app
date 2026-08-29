@@ -161,7 +161,7 @@ The `loginCaptain` controller:
 5. Calls `captain.comparePassword(password)` to verify the bcrypt hash.
 6. Returns `401` if the password does not match.
 7. Issues a JWT via `captain.generateAuthToken()`.
-8. Sets an `httpOnly` `token` cookie.
+8. Stores the token as an `httpOnly` `token` cookie (24h).
 9. Responds with `200` containing `{ token, captain }`.
 
 ### 3. Model Layer — `backend/models/captain.model.js`

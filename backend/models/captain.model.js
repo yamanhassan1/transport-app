@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const { JWT_SECRET, JWT_EXPIRES_IN } = require('../config/constants');
 
 const captainSchema = new mongoose.Schema(
   {
@@ -214,7 +215,7 @@ const captainSchema = new mongoose.Schema(
 captainSchema.index({ location: "2dsphere" });
 
 captainSchema.methods.generateAuthToken = function () {
-    const token = jwt.sign({ _id: this._id, role: this.role }, process.env.JWT_SECRET, { expiresIn: "24h" });
+    const token = jwt.sign({ _id: this._id, role: this.role }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
     return token;
 }
 

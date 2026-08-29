@@ -130,11 +130,8 @@ Client                Middleware (authUser)         Model                   Cont
   │  Authorization: Bearer  │                         │                         │
   │────────────────────────>│                         │                         │
   │                         │  jwt.verify(token)      │                         │
-  │                         │  findById(decoded._id)  │                         │
-  │                         │────────────────────────>│                         │
-  │                         │                         │                         │
-  │                         │  req.user = user        │ logoutUser              │
-  │                         │──────────────────────────────────────────────────>│
+  │                         │  req.userId = decoded._id│ logoutUser             │
+  │                         │─────────────────────────────────────────────────>│
   │                         │                         │                         │
   │                         │                         │  create({ token })      │
   │                         │                         │────────────────────────>│
