@@ -36,6 +36,8 @@ module.exports.registerUser = async (req, res, next) => {
 
     res.cookie("token", token, cookieOptions());
 
+    user.password = undefined;
+
     res.status(201).json({ token, user });
   } catch (err) {
     next(err);
@@ -49,11 +51,10 @@ module.exports.loginUser = async (req, res, next) => {
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { email, password } = req.body;
+    const { email, phone, password } = req.body;
 
-    const user = await userModel
-      .findOne({ email: email.toLowerCase() })
-      .select("+password");
+    const query = phone ? { phone } : { email: email.toLowerCase() };
+    const user = await userModel.findOne(query).select("+password");
 
     if (!user) {
       return res.status(401).json({ message: "Invalid email or password" });

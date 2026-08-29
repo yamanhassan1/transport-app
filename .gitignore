@@ -37,3 +37,6 @@ Desktop.ini
 *.tgz
 tmp/
 temp/
+
+# Docs (generated/private spec)
+frontend/UI-UX-DESIGN-SYSTEM.md

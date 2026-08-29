@@ -8,10 +8,10 @@ authentication.
 
 ## API Specification — `POST /users/login`
 
-Authenticates an existing user by verifying their email and password. The
-endpoint validates the request payload, looks up the user by email, compares
-the supplied password against the stored bcrypt hash, and returns a signed JWT
-alongside the authenticated user resource.
+Authenticates an existing user by verifying their email **or phone** and
+password. The endpoint validates the request payload, looks up the user by the
+supplied field, compares the supplied password against the stored bcrypt hash,
+and returns a signed JWT alongside the authenticated user resource.
 
 - **Method:** `POST`
 - **Path:** `/users/login`
@@ -26,8 +26,13 @@ alongside the authenticated user resource.
 
 | Parameter  | Type   | Required | Constraints                                     |
 | ---------- | ------ | -------- | ----------------------------------------------- |
-| `email`    | string | Yes      | Must be a valid email; minimum 5 characters     |
+| `email`    | string | No*      | Valid email; lowercased before lookup           |
+| `phone`    | string | No*      | Valid mobile number                             |
 | `password` | string | Yes      | Minimum length of 6 characters                  |
+
+> \* At least one of `email` or `phone` is required (enforced by a
+> `body().custom` check). The controller queries `{ phone }` when a phone is
+> given, otherwise `{ email: email.toLowerCase() }`.
 
 #### Example Request
 
@@ -38,13 +43,24 @@ alongside the authenticated user resource.
 }
 ```
 
+or, by phone:
+
+```json
+{
+  "phone": "+1234567890",
+  "password": "secret123"
+}
+```
+
 #### Validation
 
 Validation is performed at the route layer via `express-validator` prior to
 executing the controller:
 
-- `email` must be a valid email address (and is lowercased before lookup).
+- `email` (optional) must be a valid email address (and is lowercased).
+- `phone` (optional) must be a valid mobile phone number.
 - `password` must be at least 6 characters.
+- A `body().custom` check rejects the request unless `email` **or** `phone` is present.
 
 Validation failures result in an immediate `400` response enumerating the errors.
 
@@ -134,8 +150,10 @@ login flow is decomposed into three layers:
 The `POST /login` route registers `express-validator` middleware that
 enforces the following prior to invoking the controller:
 
-- `email` is a valid email (`isEmail`) and is lowercased (`toLowerCase`)
+- `email` (optional) is a valid email (`isEmail`) and is lowercased (`toLowerCase`)
+- `phone` (optional) is a valid mobile number
 - `password` length ≥ 6
+- exactly one of `email` / `phone` required (custom `body()` check)
 
 If validation fails, the router short-circuits with `400` and an array of
 error objects.
@@ -145,9 +163,10 @@ error objects.
 The `loginUser` controller:
 
 1. Re-checks `validationResult` and responds `400` on failure.
-2. Destructures `email` and `password` from `req.body`.
-3. Queries the database for a user matching the email (lowercased to match the
-   stored value), explicitly selecting the `password` field
+2. Destructures `email`, `phone` and `password` from `req.body`.
+3. Queries the database with `{ phone }` when a phone was supplied, otherwise by
+   `{ email: email.toLowerCase() }` (matching the stored lowercase value),
+   explicitly selecting the `password` field
    (`select("+password")`) since it is excluded by default.
 4. Returns `401` if no user is found.
 5. Calls `user.comparePassword(password)` to verify the bcrypt hash.
@@ -164,7 +183,7 @@ The `User` schema provides the following methods used during login:
 
 - `comparePassword(password)` — instance method that performs a bcrypt
   comparison between the supplied plaintext and the stored hash.
-- `generateAuthToken()` — instance method that signs `{ _id }` with
+- `generateAuthToken()` — instance method that signs `{ _id, role }` with
   `JWT_SECRET` and returns the resulting JWT.
 
 #### Schema Field: `password`

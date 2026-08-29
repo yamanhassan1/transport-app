@@ -98,8 +98,10 @@ The `authUser` middleware authenticates the request before logout runs:
 1. Extracts the token from `req.cookies.token` or the `Authorization` header.
 2. Returns `401` if no token is present.
 3. Returns `401` if the token is already blacklisted.
-4. Verifies the token with `jwt.verify(token, JWT_SECRET)` and resolves the user.
-5. Attaches the user to `req.user` and calls `next()`.
+4. Verifies the token with `jwt.verify(token, JWT_SECRET)` and rejects it if the
+   payload `role` is not `"user"`.
+5. Attaches `req.userId = decoded._id` and `req.userRole = decoded.role`
+   (no database lookup) and calls `next()`.
 
 ### 3. Controller Layer — `backend/controllers/user.controller.js`
 

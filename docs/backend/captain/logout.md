@@ -2,15 +2,15 @@
 
 ## Summary
 
-This document describes the captain logout endpoint and its backend
-implementation, covering the API contract as well as the request lifecycle from
-route to token invalidation.
+Captains log out through their own endpoint, `GET /captains/logout`. The
+mechanism is **identical** to the user logout (clear cookie + blacklist token),
+so this doc covers the API contract and the captain-specific wiring and
+references the shared lifecycle instead of repeating it.
 
 ## API Specification — `GET /captains/logout`
 
-Logs out the currently authenticated captain. The endpoint clears the
-authentication cookie and blacklists the supplied token so it can no longer be
-used to access protected routes.
+Logs out the currently authenticated captain. Clears the authentication cookie
+and blacklists the supplied token so it can no longer be used.
 
 - **Method:** `GET`
 - **Path:** `/captains/logout`
@@ -19,14 +19,8 @@ used to access protected routes.
 
 ### Request
 
-No request body or query parameters are required.
-
-#### Authentication
-
-The token may be supplied in one of two ways:
-
-- **`Authorization` header:** `Bearer <token>`
-- **`token` cookie:** `token=<token>` (set on successful login)
+No body or query parameters. Auth via **`Authorization` header**
+(`Bearer <token>`) **or** the **`token`** httpOnly cookie.
 
 #### Example Request
 
@@ -39,139 +33,57 @@ curl http://localhost:3000/captains/logout \
 
 #### `200 OK`
 
-Returned when the token has been cleared and blacklisted.
-
-```json
-{
-  "message": "Logged out successfully"
-}
-```
+`{ "message": "Logged out successfully" }` — token cleared and blacklisted.
 
 #### `401 Unauthorized`
 
-Returned when no token is supplied, the token is invalid or expired, the token
-has already been blacklisted, or the captain does not exist.
+`{ "message": "Unauthorized." }` — missing/invalid/expired/blacklisted token or
+captain not found.
 
-```json
-{
-  "message": "Unauthorized."
-}
-```
-
-### Status Codes
+### Status codes
 
 | Code  | Meaning         | Condition                                          |
 | ----- | --------------- | -------------------------------------------------- |
 | `200` | OK              | Token cleared and blacklisted                      |
 | `401` | Unauthorized    | Missing/invalid/expired/blacklisted token or captain not found |
 
-### Example `curl`
+## How it differs from the user logout
 
-```bash
-curl -X GET http://localhost:3000/captains/logout \
-  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR..."
-```
+| Aspect          | User                              | Captain                                |
+| --------------- | --------------------------------- | -------------------------------------- |
+| Path            | `/users/logout`                   | `/captains/logout`                     |
+| Handler         | `logoutUser`                      | `logoutCaptain`                        |
+| Middleware      | `authUser`                        | `authCaptain`                          |
+| Route wiring    | `router.get("/logout", authUser, userController.logoutUser)` | `router.get("/logout", authCaptain, captainController.logoutCaptain)` |
 
-## Architecture
+## Shared lifecycle
 
-The backend is an Express application backed by MongoDB (via Mongoose). The
-logout flow is decomposed into three layers:
+The flow is the same as the user logout: `authCaptain` middleware extracts the
+token (`req.cookies.token` or `Authorization: Bearer`), rejects missing or
+already-blacklisted tokens with `401`, verifies with `jwt.verify(token,
+JWT_SECRET)` and checks the role, setting `req[idField] = decoded._id`; then `logoutCaptain` clears
+the `token` cookie (`res.clearCookie("token", clearCookieOptions())`),
+re-extracts the token (`req.cookies.token || req.headers.authorization?.split(" ")[1]`),
+persists it to the blacklist (`blackListTokenModel.create({ token })`), and
+answers `200 { message }`.
 
-1. **Routes** — route definition and middleware wiring
-2. **Middlewares** — authentication (JWT verification)
-3. **Controllers** — token invalidation and response handling
+See [`../user/logout.md`](../user/logout.md) for the full lifecycle walkthrough,
+flow diagram, security notes (24h blacklist TTL, cookie clearing,
+blacklisted-token re-check), and the `BlacklistToken` model table.
 
-## Logout Lifecycle
+## Response contract (captain)
 
-### 1. Route Layer — `backend/routes/captain.routes.js`
+| Status | Condition                                   | Body                              |
+| ------ | ------------------------------------------- | --------------------------------- |
+| `200`  | Logged out successfully                     | `{ message: "Logged out successfully" }` |
+| `401`  | Missing/invalid/blacklisted token or no captain | `{ message: "Unauthorized." }`   |
 
-The `GET /logout` route wires the `authCaptain` middleware:
-
-```js
-router.get("/logout", authCaptain, captainController.logoutCaptain);
-```
-
-### 2. Middleware Layer — `backend/middlewares/auth.middleware.js`
-
-The `authCaptain` middleware authenticates the request before logout runs:
-
-1. Extracts the token from `req.cookies.token` or the `Authorization` header.
-2. Returns `401` if no token is present.
-3. Returns `401` if the token is already blacklisted.
-4. Verifies the token with `jwt.verify(token, JWT_SECRET)` and resolves the
-   captain.
-5. Attaches the captain to `req.captain` and calls `next()`.
-
-### 3. Controller Layer — `backend/controllers/captain.controller.js`
-
-The `logoutCaptain` controller:
-
-1. Clears the `token` cookie via
-   `res.clearCookie("token", clearCookieOptions())`, using the same attributes
-   it was set with.
-2. Re-extracts the token from the cookie or `Authorization` header
-   (`req.cookies.token || req.headers.authorization?.split(" ")[1]`).
-3. Persists the token to the blacklist collection via
-   `blackListTokenModel.create({ token })`, invalidating it for future requests.
-4. Responds with `200` and `{ message: "Logged out successfully" }`.
-
-### 4. Model Layer — `backend/models/blacklistToken.model.js`
-
-The `BlacklistToken` schema stores invalidated tokens:
-
-| Field       | Type   | Required | Notes                                              |
-| ----------- | ------ | -------- | -------------------------------------------------- |
-| `token`     | string | Yes      | Unique                                            |
-| `createdAt` | Date   | Yes      | Defaults to now; auto-expires after `86400` seconds (24 hours) |
-
-## Logout Flow Diagram
-
-```
-Client                  Middleware (authCaptain)       Model                Controller
-  │                         │                         │                         │
-  │  GET /captains/logout   │                         │                         │
-  │  Authorization: Bearer  │                         │                         │
-  │────────────────────────>│                         │                         │
-  │                         │  jwt.verify(token)      │                         │
-  │                         │  req.captainId = decoded._id│ logoutCaptain       │
-  │                         │─────────────────────────────────────────────────>│
-  │                         │                         │                         │
-  │                         │                         │  create({ token })      │
-  │                         │                         │────────────────────────>│
-  │                         │                         │  (blacklist)            │
-  │                         │                         │<────────────────────────│
-  │                         │                         │                         │
-  │  { message }            │                         │                         │
-  │<────────────────────────│                         │                         │
-```
-
-## Security Considerations
-
-- **Token blacklisting** — On logout the token is stored in a blacklist with a
-  24-hour TTL, so it cannot be reused even before natural JWT expiry.
-- **Cookie clearing** — The authentication cookie is removed on the client.
-- **Idempotent re-check** — The `authCaptain` middleware rejects requests
-  carrying an already-blacklisted token with `401`. 
-
-## Response Contract
-
-| Status | Condition                          | Body                              |
-| ------ | ---------------------------------- | --------------------------------- |
-| `200`  | Logged out successfully            | `{ message: "Logged out successfully" }` |
-| `401`  | Missing/invalid/blacklisted token or no captain | `{ message: "Unauthorized." }` |
-
-## Source Layout
+## Source layout
 
 ```
 backend/
-  app.js                 # Application bootstrap and middleware
-  server.js              # Server entry point
-  config/constants.js    # Centralized config (JWT secret, rate limits, CORS)
-  config/cookies.js      # Auth cookie attributes (httpOnly, sameSite, secure)
-  routes/captain.routes.js  # Route definitions and middleware wiring
-  controllers/captain.controller.js  # Request/response handling and token invalidation
-  middlewares/auth.middleware.js     # JWT authentication
-  models/captain.model.js            # Schema and helpers
-  models/blacklistToken.model.js     # Token blacklist (created on logout)
-  database/db.js                    # MongoDB connection
+  routes/captain.routes.js          # GET /logout + authCaptain
+  controllers/captain.controller.js # logoutCaptain (cookie clear + blacklist)
+  middlewares/auth.middleware.js    # authCaptain (JWT verification)
+  models/blacklistToken.model.js    # Token blacklist (created on logout)
 ```

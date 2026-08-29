@@ -2,16 +2,15 @@
 
 ## Summary
 
-This document describes the captain profile endpoint and its backend
-implementation, covering the API contract as well as the request lifecycle from
-route to authentication.
+Captains fetch their own profile through `GET /captains/profile`. The mechanism
+is **identical** to the user profile endpoint (JWT auth middleware + controller
+lookup), so this doc covers the API contract and the captain-specific wiring and
+references the shared lifecycle instead of repeating it.
 
 ## API Specification — `GET /captains/profile`
 
-Returns the profile (resource) of the currently authenticated captain. The
-endpoint is protected by the `authCaptain` middleware, which resolves the
-captain from the supplied JWT and attaches them to the request for the
-controller to return.
+Returns the profile (resource) of the currently authenticated captain,
+protected by the `authCaptain` middleware.
 
 - **Method:** `GET`
 - **Path:** `/captains/profile`
@@ -20,14 +19,8 @@ controller to return.
 
 ### Request
 
-No request body or query parameters are required.
-
-#### Authentication
-
-The token may be supplied in one of two ways:
-
-- **`Authorization` header:** `Bearer <token>`
-- **`token` cookie:** `token=<token>` (set on successful login)
+No body or query parameters. Auth via **`Authorization` header**
+(`Bearer <token>`) **or** the **`token`** httpOnly cookie.
 
 #### Example Request
 
@@ -40,16 +33,13 @@ curl http://localhost:3000/captains/profile \
 
 #### `200 OK`
 
-Returned when the request is authenticated. The body is the authenticated
-captain document.
+The authenticated captain document (full shape — incl. `vehicle`, `license`,
+`rating`, trip counters; `password` excluded via `select: false`):
 
 ```json
 {
   "_id": "66c...",
-  "fullname": {
-    "firstName": "John",
-    "lastName": "Doe"
-  },
+  "fullname": { "firstName": "John", "lastName": "Doe" },
   "email": "captain.doe@example.com",
   "phone": "+1234567890",
   "vehicle": {
@@ -68,129 +58,57 @@ captain document.
 }
 ```
 
-> The `password` field is excluded from the response (`select: false` on the schema).
-
 #### `401 Unauthorized`
 
-Returned when no token is supplied, the token is invalid or expired, the token
-has been blacklisted (e.g. after logout), or the captain does not exist.
+`{ "message": "Unauthorized." }` — missing/invalid/expired/blacklisted token or
+captain not found.
 
-```json
-{
-  "message": "Unauthorized."
-}
-```
-
-### Status Codes
+### Status codes
 
 | Code  | Meaning         | Condition                                          |
 | ----- | --------------- | -------------------------------------------------- |
 | `200` | OK              | Token valid and captain found                      |
 | `401` | Unauthorized    | Missing/invalid/expired/blacklisted token or captain not found |
 
-## Architecture
+## How it differs from the user profile
 
-The backend is an Express application backed by MongoDB (via Mongoose). The
-captain profile flow is decomposed into three layers:
+| Aspect          | User                            | Captain                                |
+| --------------- | ------------------------------- | -------------------------------------- |
+| Path            | `/users/profile`                | `/captains/profile`                    |
+| Handler         | `getUserProfile`                | `getCaptainProfile`                    |
+| Middleware      | `authUser`                      | `authCaptain`                          |
+| Route wiring    | `router.get("/profile", authUser, userController.getUserProfile)` | `router.get("/profile", authCaptain, captainController.getCaptainProfile)` |
+| Attached id     | `req.userId = decoded._id`      | `req.captainId = decoded._id`          |
+| Lookup          | `userModel.findById(req.userId)` | `CaptainModel.findById(req.captainId)` |
+| 404 message     | `"User not found"`              | `"Captain not found"`                  |
+| JWT role check  | rejects non-`"user"`            | rejects non-`"captain"`                |
 
-1. **Routes** — route definition and middleware wiring
-2. **Middlewares** — authentication (JWT verification)
-3. **Controllers** — response handling
+## Shared lifecycle
 
-## Profile Lifecycle
+The flow is the same as the user profile: `authCaptain` middleware extracts the
+token, rejects missing/blacklisted tokens with `401`, verifies with
+`jwt.verify(token, JWT_SECRET)` and rejects a wrong role, attaches
+`req.captainId = decoded._id` (no DB lookup in middleware); then
+`getCaptainProfile` fetches the fresh record with `CaptainModel.findById` and
+returns `200 { ...captain }` or `404 { message }`.
 
-### 1. Route Layer — `backend/routes/captain.routes.js`
+See [`../user/profile.md`](../user/profile.md) for the full lifecycle
+walkthrough, flow diagram, and security notes (JWT verification, blacklist
+enforcement, password exclusion).
 
-The `GET /profile` route wires the `authCaptain` middleware:
+## Response contract (captain)
 
-```js
-router.get("/profile", authCaptain, captainController.getCaptainProfile);
-```
+| Status | Condition                                    | Body                                |
+| ------ | -------------------------------------------- | ----------------------------------- |
+| `200`  | Authenticated successfully                   | `{ ...captain }`                    |
+| `401`  | Missing/invalid/blacklisted token or no captain | `{ message: "Unauthorized." }`    |
 
-The middleware runs before the controller to authenticate the request.
-
-### 2. Middleware Layer — `backend/middlewares/auth.middleware.js`
-
-The `authCaptain` middleware:
-
-1. Extracts the token from `req.cookies.token` or the `Authorization` header
-   (`Bearer <token>`).
-2. Returns `401` if no token is present.
-3. Checks whether the token has been blacklisted by querying the
-   `BlacklistToken` collection; returns `401` if it has.
-4. Verifies the token with `jwt.verify(token, JWT_SECRET)` and rejects it if
-   the payload `role` is not `"captain"`.
-5. Attaches `req.captainId = decoded._id` (no database lookup — the identity
-   comes from the signed JWT itself) and calls `next()`.
-
-### 3. Controller Layer — `backend/controllers/captain.controller.js`
-
-The `getCaptainProfile` controller fetches the fresh record by the verified id:
-
-```js
-module.exports.getCaptainProfile = async (req, res, next) => {
-  try {
-    const captain = await CaptainModel.findById(req.captainId);
-    if (!captain) {
-      return res.status(404).json({ message: "Captain not found" });
-    }
-    res.status(200).json(captain);
-  } catch (err) {
-    next(err);
-  }
-};
-```
-
-## Authentication Flow Diagram
-
-```
-Client                  Middleware (authCaptain)     Controller            Model
-  │                         │                             │                  │
-  │  GET /captains/profile  │                             │                  │
-  │  Authorization: Bearer  │                             │                  │
-  │────────────────────────>│                             │                  │
-  │                         │  token present?             │                  │
-  │                         │  jwt.verify(token)          │                  │
-  │                         │                             │                  │
-  │                         │  req.captainId = decoded._id│                  │
-  │                         │────────────────────────────>│                  │
-  │                         │                             │  findById(id)    │
-  │                         │                             │─────────────────>│
-  │                         │                             │                  │
-  │                         │                             │  captain returned │
-  │                         │                             │<─────────────────│
-  │                         │ 200 { captain }             │                  │
-  │<──────────────────────────────────────────────────────│                  │
-```
-
-## Security Considerations
-
-- **JWT verification** — The token is verified with `JWT_SECRET` before any
-  captain data is returned.
-- **Blacklist enforcement** — Tokens that have been logged out are rejected
-  even if they are otherwise valid.
-- **Password exclusion** — The `select: false` schema option keeps the
-  password out of profile responses.
-
-## Response Contract
-
-| Status | Condition                          | Body                              |
-| ------ | ---------------------------------- | --------------------------------- |
-| `200`  | Authenticated successfully         | `{ ...captain }`                  |
-| `401`  | Missing/invalid/blacklisted token or no captain | `{ message: "Unauthorized." }` |
-
-## Source Layout
+## Source layout
 
 ```
 backend/
-  app.js                 # Application bootstrap and middleware
-  server.js              # Server entry point
-  config/constants.js    # Centralized config (JWT secret, rate limits, CORS)
-  config/cookies.js      # Auth cookie attributes (httpOnly, sameSite, secure)
-  routes/captain.routes.js  # Route definitions and middleware wiring
-  controllers/captain.controller.js  # Request/response handling
-  middlewares/auth.middleware.js     # JWT authentication
-  models/captain.model.js            # Schema and helpers
-  models/blacklistToken.model.js     # Token blacklist (checked on auth)
-  database/db.js                    # MongoDB connection
+  routes/captain.routes.js          # GET /profile + authCaptain
+  controllers/captain.controller.js # getCaptainProfile
+  middlewares/auth.middleware.js    # authCaptain (JWT verification)
+  models/captain.model.js           # Captain schema (select:false password)
 ```

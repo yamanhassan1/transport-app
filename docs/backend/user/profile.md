@@ -9,8 +9,8 @@ route to authentication.
 ## API Specification — `GET /users/profile`
 
 Returns the profile (resource) of the currently authenticated user. The
-endpoint is protected by the `authUser` middleware, which resolves the user from
-the supplied JWT and attaches them to the request for the controller to return.
+endpoint is protected by the `authUser` middleware, which verifies the supplied
+JWT and attaches the signed identity (`req.userId`) for the controller to use.
 
 - **Method:** `GET`
 - **Path:** `/users/profile`

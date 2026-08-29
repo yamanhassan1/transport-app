@@ -68,8 +68,15 @@ router.post("/register", authLimiter, [
 ], captainController.registerCaptain);
 
 router.post("/login", authLimiter, [
-  body("email").isEmail().withMessage("Invalid Email").toLowerCase(),
-  body("password").isLength({ min: 6 }).withMessage("Password must be at least 6 characters long")
+  body("email").optional().isEmail().withMessage("Invalid Email").toLowerCase(),
+  body("phone").optional().isMobilePhone().withMessage("Invalid phone number"),
+  body("password").isLength({ min: 6 }).withMessage("Password must be at least 6 characters long"),
+  body().custom((_, { req }) => {
+    if (!req.body.email && !req.body.phone) {
+      throw new Error("Email or phone is required");
+    }
+    return true;
+  }),
 ], captainController.loginCaptain);
 
 router.get("/profile", authCaptain, captainController.getCaptainProfile);

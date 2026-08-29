@@ -1,0 +1,96 @@
+/** @type {import('tailwindcss').Config} */
+export default {
+  darkMode: "class",
+  content: ["./index.html", "./src/**/*.{js,jsx}"],
+  theme: {
+    extend: {
+      fontFamily: {
+        sans: [
+          "Inter",
+          "system-ui",
+          "-apple-system",
+          "BlinkMacSystemFont",
+          "Segoe UI",
+          "sans-serif",
+        ],
+      },
+      colors: {
+        primary: {
+          DEFAULT: "rgb(var(--primary-rgb) / <alpha-value>)",
+          50: "rgb(var(--primary-50-rgb) / <alpha-value>)",
+          100: "rgb(var(--primary-100-rgb) / <alpha-value>)",
+          200: "rgb(var(--primary-200-rgb) / <alpha-value>)",
+          300: "rgb(var(--primary-300-rgb) / <alpha-value>)",
+          400: "rgb(var(--primary-400-rgb) / <alpha-value>)",
+          500: "rgb(var(--primary-500-rgb) / <alpha-value>)",
+          600: "rgb(var(--primary-600-rgb) / <alpha-value>)",
+          700: "rgb(var(--primary-700-rgb) / <alpha-value>)",
+          800: "rgb(var(--primary-800-rgb) / <alpha-value>)",
+          900: "rgb(var(--primary-900-rgb) / <alpha-value>)",
+        },
+        gray: {
+          50: "rgb(var(--gray-50-rgb) / <alpha-value>)",
+          100: "rgb(var(--gray-100-rgb) / <alpha-value>)",
+          200: "rgb(var(--gray-200-rgb) / <alpha-value>)",
+          300: "rgb(var(--gray-300-rgb) / <alpha-value>)",
+          400: "rgb(var(--gray-400-rgb) / <alpha-value>)",
+          500: "rgb(var(--gray-500-rgb) / <alpha-value>)",
+          600: "rgb(var(--gray-600-rgb) / <alpha-value>)",
+          700: "rgb(var(--gray-700-rgb) / <alpha-value>)",
+          800: "rgb(var(--gray-800-rgb) / <alpha-value>)",
+          900: "rgb(var(--gray-900-rgb) / <alpha-value>)",
+        },
+        background: "rgb(var(--background-rgb) / <alpha-value>)",
+        map: "rgb(var(--map-surface-rgb) / <alpha-value>)",
+        surface: {
+          DEFAULT: "rgb(var(--surface-rgb) / <alpha-value>)",
+          elevated: "rgb(var(--surface-elevated-rgb) / <alpha-value>)",
+        },
+        line: "var(--border)",
+        ink: {
+          DEFAULT: "var(--text-primary)",
+          secondary: "var(--text-secondary)",
+          muted: "var(--text-muted)",
+        },
+        success: {
+          DEFAULT: "rgb(var(--success-rgb) / <alpha-value>)",
+          light: "rgb(var(--success-light-rgb) / <alpha-value>)",
+          700: "rgb(var(--success-700-rgb) / <alpha-value>)",
+          800: "rgb(var(--success-800-rgb) / <alpha-value>)",
+        },
+        warning: {
+          DEFAULT: "rgb(var(--warning-rgb) / <alpha-value>)",
+          light: "rgb(var(--warning-light-rgb) / <alpha-value>)",
+          700: "rgb(var(--warning-700-rgb) / <alpha-value>)",
+          800: "rgb(var(--warning-800-rgb) / <alpha-value>)",
+        },
+        error: {
+          DEFAULT: "rgb(var(--error-rgb) / <alpha-value>)",
+          light: "rgb(var(--error-light-rgb) / <alpha-value>)",
+          700: "rgb(var(--error-700-rgb) / <alpha-value>)",
+          800: "rgb(var(--error-800-rgb) / <alpha-value>)",
+        },
+        info: {
+          DEFAULT: "rgb(var(--info-rgb) / <alpha-value>)",
+          light: "rgb(var(--info-light-rgb) / <alpha-value>)",
+          700: "rgb(var(--info-700-rgb) / <alpha-value>)",
+          800: "rgb(var(--info-800-rgb) / <alpha-value>)",
+          900: "rgb(var(--info-900-rgb) / <alpha-value>)",
+        },
+      },
+      borderRadius: {
+        sm: "var(--radius-sm)",
+        md: "var(--radius-md)",
+        lg: "var(--radius-lg)",
+        xl: "var(--radius-xl)",
+        "2xl": "var(--radius-2xl)",
+      },
+      boxShadow: {
+        sm: "var(--shadow-sm)",
+        md: "var(--shadow-md)",
+        lg: "var(--shadow-lg)",
+      },
+    },
+  },
+  plugins: [],
+};

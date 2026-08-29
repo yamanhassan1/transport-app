@@ -45,6 +45,8 @@ module.exports.registerCaptain = async (req, res, next) => {
 
     res.cookie("token", token, cookieOptions());
 
+    captain.password = undefined;
+
     res.status(201).json({ token, captain });
   } catch (err) {
     next(err);
@@ -58,11 +60,10 @@ module.exports.loginCaptain = async (req, res, next) => {
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { email, password } = req.body;
+    const { email, phone, password } = req.body;
 
-    const captain = await CaptainModel
-      .findOne({ email: email.toLowerCase() })
-      .select("+password");
+    const query = phone ? { phone } : { email: email.toLowerCase() };
+    const captain = await CaptainModel.findOne(query).select("+password");
 
     if (!captain) {
       return res.status(401).json({ message: "Invalid email or password" });

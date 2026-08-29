@@ -192,11 +192,22 @@ const options = {
         },
         Login: {
           type: "object",
-          required: ["email", "password"],
+          required: ["password"],
           properties: {
-            email: { type: "string", format: "email", example: "john@example.com" },
+            email: {
+              type: "string",
+              format: "email",
+              example: "john@example.com",
+              description: "Either email or phone must be provided.",
+            },
+            phone: {
+              type: "string",
+              example: "+14155550101",
+              description: "Alternative to email.",
+            },
             password: { type: "string", format: "password", example: "secret123", minLength: 6 },
           },
+          description: "Login with an email address OR a phone number (at least one required) plus a password.",
         },
         TokenResponse: {
           type: "object",
@@ -334,7 +345,7 @@ const options = {
           tags: ["Users"],
           summary: "Login as a user",
           description:
-            "Authenticates a user, returns a JWT, and sets the `token` httpOnly cookie (24h).",
+            "Authenticates a user by email OR phone + password, returns a JWT, and sets the `token` httpOnly cookie (24h).",
           requestBody: {
             required: true,
             content: {
@@ -482,7 +493,7 @@ const options = {
           tags: ["Captains"],
           summary: "Login as a captain",
           description:
-            "Authenticates a captain, returns a JWT, and sets the `token` httpOnly cookie (24h).",
+            "Authenticates a captain by email OR phone + password, returns a JWT, and sets the `token` httpOnly cookie (24h).",
           requestBody: {
             required: true,
             content: {

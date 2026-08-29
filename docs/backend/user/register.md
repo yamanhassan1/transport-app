@@ -197,7 +197,7 @@ The `User` schema defines:
 
 Schema methods:
 
-- `generateAuthToken()` — signs `{ _id }` with `JWT_SECRET` (24h).
+- `generateAuthToken()` — signs `{ _id, role }` with `JWT_SECRET` (24h).
 - `comparePassword(password)` — bcrypt comparison for login.
 - `hashPassword(password)` (static) — bcrypt hash, cost 10.
 
