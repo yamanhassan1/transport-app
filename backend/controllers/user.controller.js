@@ -2,7 +2,7 @@ const userModel = require("../models/user.model");
 const userService = require("../services/user.service");
 const { validationResult } = require("express-validator");
 const blackListTokenModel = require("../models/blacklistToken.model");
-const { ACCESS_TOKEN_TTL_MS } = require("../config/constants");
+const { cookieOptions, clearCookieOptions } = require("../config/cookies");
 
 module.exports.registerUser = async (req, res, next) => {
   const errors = validationResult(req);
@@ -34,11 +34,7 @@ module.exports.registerUser = async (req, res, next) => {
 
     const token = user.generateAuthToken();
 
-    res.cookie("token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      maxAge: ACCESS_TOKEN_TTL_MS,
-    });
+    res.cookie("token", token, cookieOptions());
 
     res.status(201).json({ token, user });
   } catch (err) {
@@ -71,11 +67,7 @@ module.exports.loginUser = async (req, res, next) => {
 
     const token = user.generateAuthToken();
 
-    res.cookie("token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      maxAge: ACCESS_TOKEN_TTL_MS,
-    });
+    res.cookie("token", token, cookieOptions());
 
     user.password = undefined;
 
@@ -99,7 +91,7 @@ module.exports.getUserProfile = async (req, res, next) => {
 
 module.exports.logoutUser = async (req, res, next) => {
   try {
-    res.clearCookie("token");
+    res.clearCookie("token", clearCookieOptions());
     const token =
       req.cookies.token || req.headers.authorization?.split(" ")[1];
 

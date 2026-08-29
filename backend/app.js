@@ -1,7 +1,10 @@
+const dotenv = require("dotenv");
+
+dotenv.config();
+
 const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
-const dotenv = require("dotenv");
 const cookieParser = require("cookie-parser");
 const connectDB = require("./database/db");
 const userRoutes = require("./routes/user.routes");
@@ -11,7 +14,6 @@ const swaggerSpec = require("./swagger");
 const { CORS_ORIGINS } = require("./config/constants");
 const { generalLimiter } = require("./middlewares/rateLimit.middleware");
 
-dotenv.config();
 connectDB();
 
 const app = express();

@@ -1,4 +1,9 @@
 const JWT_SECRET = process.env.JWT_SECRET;
+
+if (!JWT_SECRET) {
+  throw new Error("JWT_SECRET is not set. Add it to backend/.env");
+}
+
 const JWT_EXPIRES_IN = "24h";
 const ACCESS_TOKEN_TTL_MS = 24 * 60 * 60 * 1000;
 

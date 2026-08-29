@@ -2,7 +2,7 @@ const CaptainModel = require("../models/captain.model");
 const captainService = require("../services/captain.service");
 const { validationResult } = require("express-validator");
 const blackListTokenModel = require("../models/blacklistToken.model");
-const { ACCESS_TOKEN_TTL_MS } = require("../config/constants");
+const { cookieOptions, clearCookieOptions } = require("../config/cookies");
 
 module.exports.registerCaptain = async (req, res, next) => {
   const errors = validationResult(req);
@@ -43,11 +43,7 @@ module.exports.registerCaptain = async (req, res, next) => {
 
     const token = captain.generateAuthToken();
 
-    res.cookie("token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      maxAge: ACCESS_TOKEN_TTL_MS,
-    });
+    res.cookie("token", token, cookieOptions());
 
     res.status(201).json({ token, captain });
   } catch (err) {
@@ -80,11 +76,7 @@ module.exports.loginCaptain = async (req, res, next) => {
 
     const token = captain.generateAuthToken();
 
-    res.cookie("token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      maxAge: ACCESS_TOKEN_TTL_MS,
-    });
+    res.cookie("token", token, cookieOptions());
 
     captain.password = undefined;
 
@@ -108,7 +100,7 @@ module.exports.getCaptainProfile = async (req, res, next) => {
 
 module.exports.logoutCaptain = async (req, res, next) => {
   try {
-    res.clearCookie("token");
+    res.clearCookie("token", clearCookieOptions());
     const token =
       req.cookies.token || req.headers.authorization?.split(" ")[1];
 
