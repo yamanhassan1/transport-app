@@ -2,36 +2,101 @@ const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
-const userSchema = new mongoose.Schema({
-  fullname: {
-    firstname: {
+const userSchema = new mongoose.Schema(
+  {
+    fullname: {
+      firstName: {
+        type: String,
+        required: true,
+        trim: true,
+        minlength: [3, "First name must be at least 3 characters long"],
+        maxlength: 50,
+      },
+
+      lastName: {
+        type: String,
+        trim: true,
+        minlength: [3, "Last name must be at least 3 characters long"],
+        maxlength: 50,
+      },
+    },
+
+    email: {
       type: String,
       required: true,
-      minlength: [3, "First name must be at least 3 characters long"],
+      unique: true,
+      lowercase: true,
+      trim: true,
+      match: [/.+\@.+\..+/, "Please fill a valid email address"],
     },
-    lastname: {
+
+    phone: {
       type: String,
-      minlength: [3, "Last name must be at least 3 characters long"],
+      required: true,
+      unique: true,
+      trim: true,
+    },
+
+    password: {
+      type: String,
+      required: true,
+      select: false,
+      minlength: [6, "Password must be at least 6 characters long"],
+    },
+
+    profileImage: {
+      type: String,
+      default: null,
+    },
+
+    role: {
+      type: String,
+      enum: ["user"],
+      default: "user",
+    },
+
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
+
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
+
+    location: {
+      type: {
+        type: String,
+        enum: ["Point"],
+        default: "Point",
+      },
+
+      coordinates: {
+        type: [Number],
+        default: [0, 0],
+      },
+    },
+    socketId: {
+      type: String,
+    },
+
+    lastLoginAt: {
+      type: Date,
+      default: null,
     },
   },
-  email: {
-    type: String,
-    required: true,
-    unique: true,
-    minlength: [5, "Email must be at least 5 characters long"],
+  {
+    timestamps: true,
   },
-  password: {
-    type: String,
-    required: true,
-    select: false,
-  },
-  socketId: {
-    type: String,
-  },
-});
+);
+
+userSchema.index({ location: "2dsphere" });
 
 userSchema.methods.generateAuthToken = function () {
-  const token = jwt.sign({ _id: this._id }, process.env.JWT_SECRET, { expiresIn: '24h' });
+  const token = jwt.sign({ _id: this._id }, process.env.JWT_SECRET, {
+    expiresIn: "24h",
+  });
   return token;
 };
 
@@ -43,6 +108,6 @@ userSchema.statics.hashPassword = async function (password) {
   return await bcrypt.hash(password, 10);
 };
 
-const userModel = mongoose.model("User", userSchema);
+const UserModel = mongoose.model("User", userSchema);
 
-module.exports = userModel;
+module.exports = UserModel;

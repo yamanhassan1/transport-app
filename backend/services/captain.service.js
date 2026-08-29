@@ -1,0 +1,69 @@
+const CaptainModel = require("../models/captain.model");
+
+module.exports.isCaptainExists = async ({
+  email,
+  phone,
+  licenseNumber,
+  plateNumber,
+}) => {
+  const existing = await CaptainModel.findOne({
+    $or: [{ email }, { phone }, { "license.number": licenseNumber }, { "vehicle.plateNumber": plateNumber }],
+  });
+
+  if (!existing) {
+    return { exists: false };
+  }
+
+  if (existing.email.toLowerCase() === email.toLowerCase()) {
+    return { exists: true, field: "email" };
+  }
+
+  if (existing.phone === phone) {
+    return { exists: true, field: "phone" };
+  }
+
+  if (existing.license?.number === licenseNumber) {
+    return { exists: true, field: "license.number" };
+  }
+
+  return { exists: true, field: "vehicle.plateNumber" };
+};
+
+module.exports.createCaptain = async ({
+  firstName,
+  lastName,
+  email,
+  phone,
+  password,
+  vehicle,
+  license,
+}) => {
+  if (!firstName || !email || !phone || !password) {
+    throw new Error("All fields are required");
+  }
+
+  if (!vehicle?.vehicleType || !vehicle?.make || !vehicle?.model || !vehicle?.year || !vehicle?.color || !vehicle?.plateNumber) {
+    throw new Error("Vehicle details are required");
+  }
+
+  if (!license?.number || !license?.expiryDate) {
+    throw new Error("License details are required");
+  }
+
+  const captain = CaptainModel.create({
+    fullname: {
+      firstName,
+      lastName,
+    },
+    email,
+    phone,
+    password,
+    vehicle,
+    license: {
+      number: license.number,
+      expiryDate: license.expiryDate,
+    },
+  });
+
+  return captain;
+};

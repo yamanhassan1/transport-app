@@ -46,10 +46,11 @@ document.
 {
   "_id": "66c...",
   "fullname": {
-    "firstname": "John",
-    "lastname": "Doe"
+    "firstName": "John",
+    "lastName": "Doe"
   },
   "email": "john.doe@example.com",
+  "phone": "+1234567890",
   "socketId": "abc123",
   "createdAt": "2026-08-29T00:00:00.000Z",
   "updatedAt": "2026-08-29T00:00:00.000Z"

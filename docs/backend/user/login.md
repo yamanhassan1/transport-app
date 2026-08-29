@@ -6,7 +6,7 @@ This document describes the user login endpoint and its backend implementation,
 covering the API contract as well as the request lifecycle from route to
 authentication.
 
-## API Specification — `POST /user/login`
+## API Specification — `POST /users/login`
 
 Authenticates an existing user by verifying their email and password. The
 endpoint validates the request payload, looks up the user by email, compares
@@ -14,7 +14,7 @@ the supplied password against the stored bcrypt hash, and returns a signed JWT
 alongside the authenticated user resource.
 
 - **Method:** `POST`
-- **Path:** `/user/login`
+- **Path:** `/users/login`
 - **Authentication:** Not required
 - **Handler:** `loginUser` (`backend/controllers/user.controller.js`)
 
@@ -60,10 +60,11 @@ Returned when authentication succeeds.
   "user": {
     "_id": "66c...",
     "fullname": {
-      "firstname": "John",
-      "lastname": "Doe"
+      "firstName": "John",
+      "lastName": "Doe"
     },
-    "email": "john.doe@example.com"
+    "email": "john.doe@example.com",
+    "phone": "+1234567890"
   }
 }
 ```
@@ -109,7 +110,7 @@ Returned when the email does not exist or the password does not match.
 ### Example `curl`
 
 ```bash
-curl -X POST http://localhost:3000/user/login \
+curl -X POST http://localhost:3000/users/login \
   -H "Content-Type: application/json" \
   -d '{
     "email": "john.doe@example.com",
@@ -151,7 +152,8 @@ The `loginUser` controller:
 5. Calls `user.comparePassword(password)` to verify the bcrypt hash.
 6. Returns `401` if the password does not match.
 7. Issues a JWT via `user.generateAuthToken()`.
-8. Responds with `200` containing `{ token, user }`.
+8. Sets the token as an `httpOnly` `token` cookie and clears `user.password`.
+9. Responds with `200` containing `{ token, user }`.
 
 ### 3. Model Layer — `backend/models/user.model.js`
 
@@ -173,7 +175,7 @@ The `User` schema provides the following methods used during login:
 ```
 Client                  Route                   Controller              Model
   │                       │                         │                     │
-  │  POST /user/login     │                         │                     │
+  │  POST /users/login    │                         │                     │
   │──────────────────────>│                         │                     │
   │                       │  express-validator       │                     │
   │                       │─────────────────────    │                     │

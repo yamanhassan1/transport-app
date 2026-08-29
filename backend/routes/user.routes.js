@@ -6,10 +6,25 @@ const { authUser } = require('../middlewares/auth.middleware');
 const router = express.Router();
 
 router.post("/register", [
-  body("email").isEmail().withMessage("Invalid Email"),
-  body("fullname.firstname")
-    .isLength({ min: 3 })
-    .withMessage("First name must be at least 3 characters long"),
+  body("fullname.firstName")
+    .notEmpty()
+    .withMessage("First name is required")
+    .isLength({ min: 3, max: 50 })
+    .withMessage("First name must be between 3 and 50 characters long"),
+  body("fullname.lastName")
+    .optional()
+    .isLength({ min: 3, max: 50 })
+    .withMessage("Last name must be between 3 and 50 characters long"),
+  body("email")
+    .isEmail()
+    .withMessage("Invalid Email")
+    .normalizeEmail()
+    .toLowerCase(),
+  body("phone")
+    .notEmpty()
+    .withMessage("Phone is required")
+    .isMobilePhone()
+    .withMessage("Invalid phone number"),
   body("password")
     .isLength({ min: 6 })
     .withMessage("Password must be at least 6 characters long"),

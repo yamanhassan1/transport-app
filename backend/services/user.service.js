@@ -1,21 +1,39 @@
 const userModel = require("../models/user.model");
 
+module.exports.isUserExists = async ({ email, phone }) => {
+  const existing = await userModel.findOne({
+    $or: [{ email }, { phone }],
+  });
+
+  if (!existing) {
+    return { exists: false };
+  }
+
+  if (existing.email.toLowerCase() === email.toLowerCase()) {
+    return { exists: true, field: "email" };
+  }
+
+  return { exists: true, field: "phone" };
+};
+
 module.exports.createUser = async ({
-  firstname,
-  lastname,
+  firstName,
+  lastName,
   email,
+  phone,
   password,
 }) => {
-  if (!firstname || !email || !password) {
+  if (!firstName || !email || !phone || !password) {
     throw new Error("All fields are required");
   }
 
   const user = userModel.create({
     fullname: {
-      firstname,
-      lastname,
+      firstName,
+      lastName,
     },
     email,
+    phone,
     password,
   });
 
