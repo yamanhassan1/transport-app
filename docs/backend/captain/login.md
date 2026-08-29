@@ -161,7 +161,8 @@ The `loginCaptain` controller:
 5. Calls `captain.comparePassword(password)` to verify the bcrypt hash.
 6. Returns `401` if the password does not match.
 7. Issues a JWT via `captain.generateAuthToken()`.
-8. Stores the token as an `httpOnly` `token` cookie (24h).
+8. Stores the token as an `httpOnly` `token` cookie (`SameSite=Lax` in dev;
+   `Secure` with `SameSite=None` in production; 24h TTL).
 9. Responds with `200` containing `{ token, captain }`.
 
 ### 3. Model Layer — `backend/models/captain.model.js`
@@ -225,7 +226,8 @@ Client                    Route                   Controller              Model
   attackers from enumerating valid email addresses.
 - **JWT signing** — Tokens are signed with `JWT_SECRET` sourced from
   environment configuration.
-- **HTTP-only cookie** — The token is also stored in an `httpOnly` cookie on
+- **HTTP-only cookie** — The token is also stored in an `httpOnly`
+  (`SameSite=Lax` in dev; `Secure` with `SameSite=None` in production) cookie on
   successful login.
 
 ## Response Contract
@@ -242,6 +244,8 @@ Client                    Route                   Controller              Model
 backend/
   app.js                 # Application bootstrap and middleware
   server.js              # Server entry point
+  config/constants.js    # Centralized config (JWT secret, rate limits, CORS)
+  config/cookies.js      # Auth cookie attributes (httpOnly, sameSite, secure)
   routes/captain.routes.js  # Route definitions and validation
   controllers/captain.controller.js  # Request/response handling
   models/captain.model.js            # Schema and helpers

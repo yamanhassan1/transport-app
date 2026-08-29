@@ -105,7 +105,9 @@ The `authUser` middleware authenticates the request before logout runs:
 
 The `logoutUser` controller:
 
-1. Clears the `token` cookie via `res.clearCookie("token")`.
+1. Clears the `token` cookie via
+   `res.clearCookie("token", clearCookieOptions())`, using the same attributes
+   it was set with.
 2. Re-extracts the token from the cookie or `Authorization` header
    (`req.cookies.token || req.headers.authorization?.split(" ")[1]`).
 3. Persists the token to the blacklist collection via
@@ -163,6 +165,8 @@ Client                Middleware (authUser)         Model                   Cont
 backend/
   app.js                 # Application bootstrap and middleware
   server.js              # Server entry point
+  config/constants.js    # Centralized config (JWT secret, rate limits, CORS)
+  config/cookies.js      # Auth cookie attributes (httpOnly, sameSite, secure)
   routes/user.routes.js  # Route definitions and middleware wiring
   controllers/user.controller.js  # Request/response handling and token invalidation
   middlewares/auth.middleware.js  # JWT authentication

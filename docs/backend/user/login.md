@@ -153,7 +153,8 @@ The `loginUser` controller:
 5. Calls `user.comparePassword(password)` to verify the bcrypt hash.
 6. Returns `401` if the password does not match.
 7. Issues a JWT via `user.generateAuthToken()`.
-8. Stores the token as an `httpOnly` `token` cookie (24h) and clears
+8. Stores the token as an `httpOnly` `token` cookie (`SameSite=Lax` in dev;
+   `Secure` with `SameSite=None` in production; 24h TTL) and clears
    `user.password`.
 9. Responds with `200` containing `{ token, user }`.
 
@@ -233,6 +234,8 @@ Client                  Route                   Controller              Model
 backend/
   app.js                 # Application bootstrap and middleware
   server.js              # Server entry point
+  config/constants.js    # Centralized config (JWT secret, rate limits, CORS)
+  config/cookies.js      # Auth cookie attributes (httpOnly, sameSite, secure)
   routes/user.routes.js  # Route definitions and validation
   controllers/user.controller.js  # Request/response handling
   services/user.service.js        # Business logic (not used for login)

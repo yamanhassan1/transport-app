@@ -130,7 +130,7 @@ The `getCaptainProfile` controller fetches the fresh record by the verified id:
 ```js
 module.exports.getCaptainProfile = async (req, res, next) => {
   try {
-    const captain = await captainModel.findById(req.captainId);
+    const captain = await CaptainModel.findById(req.captainId);
     if (!captain) {
       return res.status(404).json({ message: "Captain not found" });
     }
@@ -185,6 +185,8 @@ Client                  Middleware (authCaptain)     Controller            Model
 backend/
   app.js                 # Application bootstrap and middleware
   server.js              # Server entry point
+  config/constants.js    # Centralized config (JWT secret, rate limits, CORS)
+  config/cookies.js      # Auth cookie attributes (httpOnly, sameSite, secure)
   routes/captain.routes.js  # Route definitions and middleware wiring
   controllers/captain.controller.js  # Request/response handling
   middlewares/auth.middleware.js     # JWT authentication

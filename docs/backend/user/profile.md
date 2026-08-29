@@ -174,6 +174,8 @@ Client                Middleware (authUser)           Controller          Model
 backend/
   app.js                 # Application bootstrap and middleware
   server.js              # Server entry point
+  config/constants.js    # Centralized config (JWT secret, rate limits, CORS)
+  config/cookies.js      # Auth cookie attributes (httpOnly, sameSite, secure)
   routes/user.routes.js  # Route definitions and middleware wiring
   controllers/user.controller.js  # Request/response handling
   middlewares/auth.middleware.js  # JWT authentication
