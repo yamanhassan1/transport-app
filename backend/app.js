@@ -6,6 +6,8 @@ const cookieParser = require("cookie-parser");
 const connectDB = require("./database/db");
 const userRoutes = require("./routes/user.routes");
 const captainRoutes = require("./routes/captain.routes");
+const swaggerUi = require("swagger-ui-express");
+const swaggerSpec = require("./swagger");
 const { CORS_ORIGINS } = require("./config/constants");
 const { generalLimiter } = require("./middlewares/rateLimit.middleware");
 
@@ -30,6 +32,12 @@ app.use(cookieParser());
 app.get("/", (req, res) => {
   res.send("Hello from the backend!");
 });
+
+app.use(
+  "/api-docs",
+  swaggerUi.serve,
+  swaggerUi.setup(swaggerSpec, { customSiteTitle: "transport-app API Docs" }),
+);
 
 app.use("/users", generalLimiter, userRoutes);
 app.use("/captains", generalLimiter, captainRoutes);

@@ -11,6 +11,7 @@ and bcrypt password hashing.
 - **JWT + bcrypt** — authentication and password hashing
 - **express-validator** — request validation
 - **helmet + express-rate-limit** — security headers and rate limiting
+- **swagger-jsdoc + swagger-ui-express** — interactive API docs
 
 ## Authentication
 
@@ -82,6 +83,14 @@ flow diagrams) lives in [`docs/backend`](docs/backend):
 
 - [`docs/backend/user`](docs/backend/user) — user register / login / profile / logout
 - [`docs/backend/captain`](docs/backend/captain) — captain register / login / profile / logout
+
+## API Documentation (Swagger UI)
+
+An interactive OpenAPI 3.0 spec is served by the backend at
+`http://localhost:3000/api-docs`. It covers every endpoint (Users and Captains),
+the request/response schemas, and the two supported auth methods (Bearer token
+and the `token` httpOnly cookie), and lets you try requests directly in the
+browser.
 
 ## Project Status
 
