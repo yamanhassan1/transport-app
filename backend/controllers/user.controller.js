@@ -1,6 +1,7 @@
 const userModel = require("../models/user.model");
 const userService = require("../services/user.service");
 const { validationResult } = require("express-validator");
+const blackListTokenModel = require("../models/blacklistToken.model");
 
 module.exports.registerUser = async (req, res, next) => {
   const errors = validationResult(req);
@@ -10,18 +11,22 @@ module.exports.registerUser = async (req, res, next) => {
 
   const { fullname, email, password } = req.body;
 
-  const hashedPassword = await userModel.hashPassword(password);
+  try {
+    const hashedPassword = await userModel.hashPassword(password);
 
-  const user = await userService.createUser({
-    firstname: fullname.firstname,
-    lastname: fullname.lastname,
-    email,
-    password: hashedPassword,
-  });
+    const user = await userService.createUser({
+      firstname: fullname.firstname,
+      lastname: fullname.lastname,
+      email,
+      password: hashedPassword,
+    });
 
-  const token = user.generateAuthToken();
+    const token = user.generateAuthToken();
 
-  res.status(201).json({ token, user });
+    res.status(201).json({ token, user });
+  } catch (err) {
+    next(err);
+  }
 };
 
 module.exports.loginUser = async (req, res, next) => {
@@ -47,10 +52,29 @@ module.exports.loginUser = async (req, res, next) => {
 
     const token = user.generateAuthToken();
 
-    console.log("User logged in:", user);
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 3600000,
+    });
+
+    user.password = undefined;
 
     res.status(200).json({ token, user });
   } catch (err) {
     next(err);
   }
+};
+
+module.exports.getUserProfile = async (req, res, next) => {
+  res.status(200).json(req.user);
+};
+
+module.exports.logoutUser = async (req, res, next) => {
+  res.clearCookie("token");
+  const token = req.cookies.token || req.headers.authorization?.split(" ")[1];
+
+  await blackListTokenModel.create({ token });
+
+  res.status(200).json({ message: "Logged out successfully" });
 };
