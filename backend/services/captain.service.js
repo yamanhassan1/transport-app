@@ -39,15 +39,21 @@ module.exports.createCaptain = async ({
   license,
 }) => {
   if (!firstName || !email || !phone || !password) {
-    throw new Error("All fields are required");
+    const error = new Error("All fields are required");
+    error.status = 400;
+    throw error;
   }
 
   if (!vehicle?.vehicleType || !vehicle?.make || !vehicle?.model || !vehicle?.year || !vehicle?.color || !vehicle?.plateNumber) {
-    throw new Error("Vehicle details are required");
+    const error = new Error("Vehicle details are required");
+    error.status = 400;
+    throw error;
   }
 
   if (!license?.number || !license?.expiryDate) {
-    throw new Error("License details are required");
+    const error = new Error("License details are required");
+    error.status = 400;
+    throw error;
   }
 
   const captain = CaptainModel.create({

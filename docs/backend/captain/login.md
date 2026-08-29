@@ -43,7 +43,7 @@ alongside the authenticated captain resource.
 Validation is performed at the route layer via `express-validator` prior to
 executing the controller:
 
-- `email` must be a valid email address.
+- `email` must be a valid email address (and is lowercased before lookup).
 - `password` must be at least 6 characters.
 
 Validation failures result in an immediate `400` response enumerating the errors.
@@ -142,7 +142,7 @@ login flow is decomposed into three layers:
 The `POST /login` route registers `express-validator` middleware that enforces
 the following prior to invoking the controller:
 
-- `email` is a valid email (`isEmail`)
+- `email` is a valid email (`isEmail`) and is lowercased (`toLowerCase`)
 - `password` length ≥ 6
 
 If validation fails, the router short-circuits with `400` and an array of
@@ -154,8 +154,9 @@ The `loginCaptain` controller:
 
 1. Re-checks `validationResult` and responds `400` on failure.
 2. Destructures `email` and `password` from `req.body`.
-3. Queries the database for a captain matching the email, explicitly selecting
-   the `password` field (`select("+password")`) since it is excluded by default.
+3. Queries the database for a captain matching the email (lowercased to match
+   the stored value), explicitly selecting the `password` field
+   (`select("+password")`) since it is excluded by default.
 4. Returns `401` if no captain is found.
 5. Calls `captain.comparePassword(password)` to verify the bcrypt hash.
 6. Returns `401` if the password does not match.
