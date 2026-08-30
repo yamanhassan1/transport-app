@@ -31,6 +31,7 @@ resource.
 | `email`              | string | Yes      | Valid email; unique; lowercased                          |
 | `phone`              | string | Yes      | Valid phone number; unique                               |
 | `password`           | string | Yes      | Minimum length of 6 characters                           |
+| `profileImage`       | string | No       | Optional SVG string (≤ 500k chars) from the client-side tracer |
 
 #### Example Request
 
@@ -42,7 +43,8 @@ resource.
   },
   "email": "john.doe@example.com",
   "phone": "+1234567890",
-  "password": "secret123"
+  "password": "secret123",
+  "profileImage": "<svg xmlns=\"http://www.w3.org/2000/svg\" ...>...</svg>"
 }
 ```
 
@@ -55,6 +57,8 @@ executing the controller:
 - `email` must be a valid email address.
 - `phone` must be an international number (`+` plus 7–15 digits, e.g. `+923001234567`).
 - `password` must be at least 6 characters.
+- `profileImage` (optional) must be a string that starts with `<svg` and
+  contains `</svg>`, max 500,000 characters. Omit it (or send `""`) to skip.
 
 Validation failures result in an immediate `400` response enumerating the errors.
 

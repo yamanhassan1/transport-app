@@ -3,7 +3,7 @@
 ## Summary
 
 Describes the captain sign-up flow at `/register` with `?mode=captain` — a
-4-step Careem-style wizard identical in UX to the rider flow but adding
+5-step Careem-style wizard identical in UX to the rider flow but adding
 **vehicle** and **driving licence** steps before contact info. On success the
 captain is signed in automatically and redirected.
 
@@ -20,16 +20,18 @@ captain is signed in automatically and redirected.
 | Step | Title                 | Fields                                                              |
 | ---- | --------------------- | ------------------------------------------------------------------- |
 | 1    | What's your name?     | First name, last name (both **required** for captains)              |
-| 2    | Your vehicle          | Vehicle type, make, model, year, color, plate number                |
-| 3    | Driving licence       | License number, license expiry (date input)                         |
-| 4    | Contact & password    | Email, phone (country-code), password, confirm password             |
+| 2    | Profile photo         | Optional (vector/SVG avatar — same as riders)                       |
+| 3    | Your vehicle          | Vehicle type, make, model, year, color, plate number                |
+| 4    | Driving licence       | License number, license expiry (date input)                         |
+| 5    | Contact & password    | Email, phone (country-code), password, confirm password             |
 
-Step 3 also shows a small heading — shield icon + **"Drive with rawan"** — as a
+Step 4 also shows a small heading — shield icon + **"Drive with rawan"** — as a
 validation cue.
 
 The wizard then mirrors the rider flow in
-`docs/frontend/user/register.md` (progress bar, per-step validation, Back /
-Continue, `scrollTo` behavior, loading state).
+`docs/frontend/user/register.md` (progress bar, photo step via
+`lib/imageToSvg.js`, per-step validation, Back / Continue, `scrollTo` behavior,
+loading state).
 
 ## Field validation (client-side)
 
@@ -75,6 +77,7 @@ payload })` (from `AuthContext`), which POSTs to `/captains/register`:
   "email": "hassan@example.com",
   "phone": "+923001234567",
   "password": "secret1",
+  "profileImage": "<svg ...>...</svg>",
   "vehicle": {
     "vehicleType": "go",
     "make": "Suzuki",
@@ -91,7 +94,8 @@ payload })` (from `AuthContext`), which POSTs to `/captains/register`:
 ```
 
 Notes: `year` is sent as a number, `plateNumber` and `license.number` are
-uppercased, `license.expiryDate` is sent as an ISO string from the `date` input.
+uppercased, `license.expiryDate` is sent as an ISO string from the `date` input,
+and `profileImage` is only sent when a photo was chosen on step 2.
 
 ### Success
 

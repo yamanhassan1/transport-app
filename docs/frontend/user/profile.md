@@ -22,7 +22,9 @@ instead of the content.
 
 ### Header card
 
-- Avatar circle: initials (`initials(account)`, `bg-primary-600` white text).
+- Avatar: if `account.profileImage` (an SVG string) is set, it is rendered via a
+  `data:image/svg+xml` URI in a 64px circle (`rounded-full object-cover`);
+  otherwise initials (`initials(account)`, `bg-primary-600` white text).
 - Name with a **Rider** badge (`Badge variant="primary"`).
 - Email (truncated) + phone (`text-ink-secondary` / `text-ink-muted`).
 - Right-aligned pill on large screens: **Member since {last 4 digits of year}**

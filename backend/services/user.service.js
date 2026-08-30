@@ -22,6 +22,7 @@ module.exports.createUser = async ({
   email,
   phone,
   password,
+  profileImage,
 }) => {
   if (!firstName || !email || !phone || !password) {
     const error = new Error("All fields are required");
@@ -37,6 +38,7 @@ module.exports.createUser = async ({
     email,
     phone,
     password,
+    profileImage: profileImage || null,
   });
 
   return user;

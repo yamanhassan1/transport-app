@@ -37,6 +37,7 @@ module.exports.createCaptain = async ({
   password,
   vehicle,
   license,
+  profileImage,
 }) => {
   if (!firstName || !email || !phone || !password) {
     const error = new Error("All fields are required");
@@ -69,6 +70,7 @@ module.exports.createCaptain = async ({
       number: license.number,
       expiryDate: license.expiryDate,
     },
+    profileImage: profileImage || null,
   });
 
   return captain;

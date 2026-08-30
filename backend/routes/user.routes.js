@@ -29,6 +29,18 @@ router.post("/register", authLimiter, [
   body("password")
     .isLength({ min: 6 })
     .withMessage("Password must be at least 6 characters long"),
+  body("profileImage")
+    .optional({ values: "falsy" })
+    .isString()
+    .withMessage("Profile image must be a string")
+    .isLength({ max: 500000 })
+    .withMessage("Profile image is too large")
+    .custom((value) =>
+      typeof value === "string" &&
+      value.trimStart().startsWith("<svg") &&
+      value.includes("</svg>"),
+    )
+    .withMessage("Profile image must be valid SVG code"),
 ], userController.registerUser);
 
 router.post("/login", authLimiter, [

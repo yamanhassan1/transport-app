@@ -2,10 +2,11 @@
 
 ## Summary
 
-Describes the rider registration flow — a Careem-style 3-step wizard at `/register`
-that collects name, contact details, and a password, then submits to
-`POST /users/register`. On success the rider is signed in automatically (JWT
-session set by the backend) and redirected to the page they came from.
+Describes the rider registration flow — a Careem-style 4-step wizard at `/register`
+that collects name, an optional profile photo, contact details, and a password,
+then submits to `POST /users/register`. On success the rider is signed in
+automatically (JWT session set by the backend) and redirected to the page they
+came from.
 
 ## Page
 
@@ -17,7 +18,7 @@ session set by the backend) and redirected to the page they came from.
 ## Layout & flow
 
 - Vertical (column) form on both mobile and desktop.
-- Progress bar on top: `N` segments + "Step X of N" label (e.g. "Step 1 of 3").
+- Progress bar on top: `N` segments + "Step X of N" label (e.g. "Step 1 of 4").
 - Each step has a title (`h3`) and a hint line.
 - Below the form: a circular **Back** button (first step shows none) + a full-width
   pill **Continue** button with arrow. The last step's label becomes
@@ -29,8 +30,23 @@ session set by the backend) and redirected to the page they came from.
 | Step | Title                | Fields                                        |
 | ---- | -------------------- | --------------------------------------------- |
 | 1    | What's your name?    | First name, last name (optional)              |
-| 2    | Contact details      | Email, phone (country-code input)             |
-| 3    | Choose a password    | Password, confirm password                    |
+| 2    | Profile photo        | Optional (vector/SVG avatar)                  |
+| 3    | Contact details      | Email, phone (country-code input)             |
+| 4    | Choose a password    | Password, confirm password                    |
+
+## Profile photo (optional)
+
+Step 2 is skippable. Picking an image runs it through a client-side tracer:
+
+- Accepted types: `image/png`, `image/jpeg`, `image/webp`; max **5 MB**.
+- The image is decoded (EXIF-aware via `createImageBitmap`, falling back to an
+  `<img>` element), scaled to at most 256 px, then converted to compact vector
+  **SVG** in the browser via `imagetracerjs` (see
+  `lib/imageToSvg.js` — helper exports `imageFileToSvg(file) → Promise<string>`).
+- The traced SVG is shown as a circular preview (also via a data URI) and is
+  what gets stored; converting shows an inline spinner. Remove clears it.
+- If a photo is skipped, no `profileImage` field is sent and the stored value
+  defaults to `null`.
 
 ## Field validation (client-side)
 
@@ -40,6 +56,7 @@ Validated per-step with `validateField(key)`, in `Register.jsx`:
 | ------------------ | --------------------------------------------------------------------- |
 | `firstName`        | required; ≥ 3 characters                                              |
 | `lastName`         | optional; if present ≥ 3 characters                                   |
+| `photo`            | always valid (optional; type/size guards surface as `photoError`)     |
 | `email`            | matches `EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/`                     |
 | `phone`            | digits-only, `PHONE_DIGITS_RE = /^\d{7,15}$/` (country code separate) |
 | `password`         | ≥ 6 characters                                                        |
@@ -69,12 +86,14 @@ On the final "Continue" the form collects this payload and calls
   "fullname": { "firstName": "Ali", "lastName": "Hassan" },
   "email": "ali@example.com",
   "phone": "+923001234567",
-  "password": "secret1"
+  "password": "secret1",
+  "profileImage": "<svg ...>...</svg>"
 }
 ```
 
-`lastName` is omitted (`undefined`) when empty. The button shows a loading
-state ("Creating account…") while the request is in flight and is disabled.
+`lastName` is omitted (`undefined`) when empty, and `profileImage` is only sent
+when a photo was chosen. The button shows a loading state ("Creating account…")
+while the request is in flight and is disabled.
 
 ### Success
 
@@ -99,6 +118,7 @@ preventing an authenticated rider from re-registering. A rider can still open
 ## Source layout
 
 - `frontend/src/pages/Register/Register.jsx` — wizard logic, validation, payload
+- `frontend/src/lib/imageToSvg.js` — client-side image → SVG tracer helper
 - `frontend/src/components/auth/AuthShell/AuthShell.jsx` — page shell/logo
 - `frontend/src/components/auth/ModeToggle/ModeToggle.jsx` — role switch
 - `frontend/src/components/ui/PhoneInput/PhoneInput.jsx` — country-code input

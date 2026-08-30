@@ -10,7 +10,7 @@ module.exports.registerUser = async (req, res, next) => {
     return res.status(400).json({ errors: errors.array() });
   }
 
-  const { fullname, email, phone, password } = req.body;
+  const { fullname, email, phone, password, profileImage } = req.body;
 
   try {
     const exists = await userService.isUserExists({ email, phone });
@@ -30,6 +30,7 @@ module.exports.registerUser = async (req, res, next) => {
       email,
       phone,
       password: hashedPassword,
+      profileImage,
     });
 
     const token = user.generateAuthToken();

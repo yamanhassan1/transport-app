@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import {
   AlertCircle,
@@ -9,9 +9,12 @@ import {
   CreditCard,
   Eye,
   EyeOff,
+  ImagePlus,
+  Loader2,
   LogIn,
   Mail,
   ShieldCheck,
+  Trash2,
   User,
   UserRound,
 } from "lucide-react";
@@ -23,6 +26,11 @@ import Button from "../../components/ui/Button/Button.jsx";
 import { useAuth } from "../../context/AuthContext.jsx";
 import { useToast } from "../../context/ToastContext.jsx";
 import { cn } from "../../lib/cn.js";
+import {
+  imageFileToSvg,
+  isImageTooLarge,
+  isSupportedImage,
+} from "../../lib/imageToSvg.js";
 
 const vehicleTypes = [
   { value: "go", label: "Go" },
@@ -41,6 +49,11 @@ const USER_STEPS = [
     fields: ["firstName", "lastName"],
   },
   {
+    title: "Profile photo",
+    hint: "Optional — we'll trace it into a lightweight vector avatar.",
+    fields: ["photo"],
+  },
+  {
     title: "Contact details",
     hint: "A verified email and phone keep your account safe.",
     fields: ["email", "phone"],
@@ -57,6 +70,11 @@ const CAPTAIN_STEPS = [
     title: "What's your name?",
     hint: "Your passengers will see this name.",
     fields: ["firstName", "lastName"],
+  },
+  {
+    title: "Profile photo",
+    hint: "Optional — your passengers will see this vector avatar.",
+    fields: ["photo"],
   },
   {
     title: "Your vehicle",
@@ -117,6 +135,11 @@ export default function Register() {
   const [formError, setFormError] = useState("");
   const [step, setStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
+  const [avatarSvg, setAvatarSvg] = useState("");
+  const [photoPreview, setPhotoPreview] = useState("");
+  const [photoError, setPhotoError] = useState("");
+  const [converting, setConverting] = useState(false);
+  const photoInputRef = useRef(null);
 
   const from = location.state?.from?.pathname || "/";
   const isCaptain = mode === "captain";
@@ -132,6 +155,10 @@ export default function Register() {
     setStep(0);
     setErrors({});
     setFormError("");
+    setAvatarSvg("");
+    setPhotoPreview("");
+    setPhotoError("");
+    setConverting(false);
   };
 
   const handlePick = (nextMode) => {
@@ -147,6 +174,44 @@ export default function Register() {
   const onPhoneChange = (digits) => {
     setForm((prev) => ({ ...prev, phone: digits }));
     setErrors((prev) => ({ ...prev, phone: undefined }));
+  };
+
+  const clearPhoto = () => {
+    setAvatarSvg("");
+    setPhotoPreview("");
+    setPhotoError("");
+  };
+
+  const applyPhoto = async (file) => {
+    setPhotoError("");
+    if (!file) {
+      clearPhoto();
+      return;
+    }
+    if (!isSupportedImage(file)) {
+      setPhotoError("Choose a PNG, JPG, or WEBP image.");
+      return;
+    }
+    if (isImageTooLarge(file)) {
+      setPhotoError("The image must be 5 MB or smaller.");
+      return;
+    }
+    setConverting(true);
+    try {
+      const svg = await imageFileToSvg(file);
+      setAvatarSvg(svg);
+      setPhotoPreview(`data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`);
+    } catch {
+      setPhotoError("Couldn't read that image. Try a different one.");
+    } finally {
+      setConverting(false);
+    }
+  };
+
+  const handlePhotoInput = (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    void applyPhoto(file);
   };
 
   const validateField = (key) => {
@@ -240,6 +305,7 @@ export default function Register() {
           email: form.email.trim(),
           phone: `${code}${form.phone}`,
           password: form.password,
+          profileImage: avatarSvg || undefined,
           vehicle: {
             vehicleType: form.vehicleType,
             make: form.make.trim(),
@@ -261,6 +327,7 @@ export default function Register() {
           email: form.email.trim(),
           phone: `${code}${form.phone}`,
           password: form.password,
+          profileImage: avatarSvg || undefined,
         };
 
     setSubmitting(true);
@@ -586,6 +653,62 @@ export default function Register() {
               error={errors.licenseExpiry}
               required
             />
+          </div>
+        )}
+
+        {current.fields.includes("photo") && (
+          <div className="flex flex-col items-center gap-3 py-1">
+            <div className="relative">
+              <span className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-full bg-gray-100 ring-2 ring-primary/20 dark:bg-gray-700/40">
+                {photoPreview ? (
+                  <img src={photoPreview} alt="Profile avatar preview" className="h-full w-full object-cover" />
+                ) : (
+                  <UserRound className="h-12 w-12 text-ink-muted" aria-hidden="true" />
+                )}
+              </span>
+              {converting && (
+                <span className="absolute inset-0 flex items-center justify-center rounded-full bg-surface/70">
+                  <Loader2 className="h-6 w-6 animate-spin text-primary" aria-hidden="true" />
+                </span>
+              )}
+            </div>
+
+            <input
+              ref={photoInputRef}
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              className="hidden"
+              onChange={handlePhotoInput}
+            />
+
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                loading={converting}
+                leftIcon={ImagePlus}
+                onClick={() => photoInputRef.current?.click()}
+              >
+                Choose photo
+              </Button>
+              {(photoPreview || avatarSvg) && (
+                <Button type="button" variant="ghost" size="sm" leftIcon={Trash2} onClick={clearPhoto}>
+                  Remove
+                </Button>
+              )}
+            </div>
+
+            <p className="text-center text-caption text-ink-muted">
+              Optional — we convert it to a compact vector (SVG) avatar. You can also skip this step.
+            </p>
+
+            {photoError && (
+              <p role="alert" className="flex items-center gap-1.5 text-caption font-medium text-error-800">
+                <AlertCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
+                {photoError}
+              </p>
+            )}
           </div>
         )}
 

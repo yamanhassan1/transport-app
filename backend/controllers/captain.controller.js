@@ -10,7 +10,7 @@ module.exports.registerCaptain = async (req, res, next) => {
     return res.status(400).json({ errors: errors.array() });
   }
 
-  const { fullname, email, phone, password, vehicle, license } = req.body;
+  const { fullname, email, phone, password, vehicle, license, profileImage } = req.body;
 
   try {
     const exists = await captainService.isCaptainExists({
@@ -39,6 +39,7 @@ module.exports.registerCaptain = async (req, res, next) => {
       password: hashedPassword,
       vehicle,
       license,
+      profileImage,
     });
 
     const token = captain.generateAuthToken();

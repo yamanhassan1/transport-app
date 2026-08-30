@@ -16,7 +16,9 @@ a **rating** and adds **vehicle** and **licence** detail cards.
 
 ### Header card
 
-- Avatar initials + name with a **Captain** badge (`Badge variant="warning"`).
+- Avatar: if `account.profileImage` (an SVG string) is set, render it via a
+  `data:image/svg+xml` URI in a 64px circle; otherwise initials. Name with a
+  **Captain** badge (`Badge variant="warning"`).
 - Email + phone; "Member since {year}" pill on large screens.
 
 ### Stats row (3-column grid)

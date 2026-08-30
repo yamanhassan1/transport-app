@@ -65,6 +65,18 @@ router.post("/register", authLimiter, [
     .withMessage("License expiry date is required")
     .isISO8601()
     .withMessage("Invalid expiry date"),
+  body("profileImage")
+    .optional({ values: "falsy" })
+    .isString()
+    .withMessage("Profile image must be a string")
+    .isLength({ max: 500000 })
+    .withMessage("Profile image is too large")
+    .custom((value) =>
+      typeof value === "string" &&
+      value.trimStart().startsWith("<svg") &&
+      value.includes("</svg>"),
+    )
+    .withMessage("Profile image must be valid SVG code"),
 ], captainController.registerCaptain);
 
 router.post("/login", authLimiter, [

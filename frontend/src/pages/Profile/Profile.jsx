@@ -25,6 +25,9 @@ export default function Profile() {
   const isCaptain = role === "captain";
 
   const avatar = account ? initials(account) : "?";
+  const avatarSrc = account?.profileImage
+    ? `data:image/svg+xml;charset=utf-8,${encodeURIComponent(account.profileImage)}`
+    : null;
   const name = account ? fullName(account) : "";
   const email = account?.email ?? "";
   const phone = account?.phone ?? "";
@@ -60,9 +63,17 @@ export default function Profile() {
 
       <Card className="mb-5">
         <div className="flex items-center gap-4 p-5">
-          <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-primary-600 text-2xl font-bold text-white shadow-sm">
-            {avatar}
-          </span>
+          {avatarSrc ? (
+            <img
+              src={avatarSrc}
+              alt={`${name}'s avatar`}
+              className="h-16 w-16 shrink-0 rounded-full object-cover shadow-sm"
+            />
+          ) : (
+            <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-primary-600 text-2xl font-bold text-white shadow-sm">
+              {avatar}
+            </span>
+          )}
           <div className="min-w-0">
             <p className="flex items-center gap-2 text-lg font-bold text-ink">
               {name}

@@ -40,6 +40,7 @@ captain resource.
 | `vehicle.plateNumber`    | string | Yes      | 3–15 characters; unique; uppercased                     |
 | `license.number`         | string | Yes      | 5–30 characters; unique                                 |
 | `license.expiryDate`     | string | Yes      | ISO 8601 date                                           |
+| `profileImage`           | string | No       | Optional SVG string (≤ 500k chars) from the client-side tracer |
 
 #### Example Request
 
@@ -49,6 +50,7 @@ captain resource.
   "email": "captain.doe@example.com",
   "phone": "+1234567890",
   "password": "secret123",
+  "profileImage": "<svg xmlns=\"http://www.w3.org/2000/svg\" ...>...</svg>",
   "vehicle": {
     "vehicleType": "car",
     "make": "Toyota",
@@ -67,7 +69,9 @@ Route layer, `express-validator` (see `backend/routes/captain.routes.js`):
 firstName/lastName 2–50, valid email (normalized + lowercased), phone as an
 international `+` + 7–15-digit string, password ≥ 6, `vehicleType` in the enum, `make`/`model`/`color` non-empty,
 `year` integer 1886–next year, `plateNumber` 3–15 **uppercased**,
-`license.number` 5–30, `license.expiryDate` ISO 8601. Failures return `400`.
+`license.number` 5–30, `license.expiryDate` ISO 8601, and `profileImage`
+(optional) a string starting with `<svg` containing `</svg>`, ≤ 500k characters.
+Failures return `400`.
 
 ### Responses
 
