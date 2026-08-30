@@ -1,81 +1,96 @@
-import { useLayoutEffect, useRef, useState } from "react";
-import { cn } from "../../../lib/cn.js";
+import { useLayoutEffect, useMemo, useState } from "react";
+import { useTheme } from "../../../context/ThemeContext.jsx";
 
-const STEP = 21;
+const STEP = 32;
+const PITCH = 72;
+const HALO = 220;
 
-const enClass =
-  "whitespace-nowrap text-[11px] font-bold uppercase leading-none tracking-[0.32em] text-primary-600/[0.14] dark:text-primary-400/[0.14]";
-const arClass =
-  "whitespace-nowrap text-[11px] font-bold leading-none tracking-[0.18em] text-amber-600/[0.12] dark:text-amber-400/[0.12]";
+const THEME_COLORS = {
+  light: { en: "#008f5b", ar: "#d97706", enOpacity: 0.16, arOpacity: 0.12 },
+  dark: { en: "#2bd188", ar: "#fbbf24", enOpacity: 0.14, arOpacity: 0.12 },
+};
+
+const AR_FONT = "'Noto Naskh Arabic', 'Geeza Pro', sans-serif";
+
+function buildLines(w, h) {
+  const lines = [];
+  const cMin = -h - HALO;
+  const cMax = w + HALO;
+  const halfPitch = PITCH / 2;
+  let i = 0;
+  for (let c = cMin; c <= cMax; c += STEP, i += 1) {
+    const isArabic = i % 2 !== 0;
+    const stagger = isArabic ? halfPitch : 0;
+    const xStart = Math.max(-PITCH, c - PITCH);
+    const xEnd = Math.min(w + PITCH, c + h + PITCH);
+    const words = [];
+    const kStart = Math.ceil((xStart - stagger) / PITCH);
+    for (let k = kStart; ; k += 1) {
+      const x = k * PITCH + stagger;
+      if (x > xEnd) break;
+      words.push({ x, y: x - c });
+    }
+    if (words.length) {
+      lines.push({ isArabic, words });
+    }
+  }
+  return lines;
+}
 
 export default function RawanPattern() {
-  const enSampleRef = useRef(null);
-  const arSampleRef = useRef(null);
-
-  const [layout, setLayout] = useState({ w: 1280, h: 800, en: 60, ar: 60 });
+  const { theme } = useTheme();
+  const [size, setSize] = useState({ w: 0, h: 0 });
 
   useLayoutEffect(() => {
     const measure = () => {
-      const en = enSampleRef.current?.getBoundingClientRect().width;
-      const ar = arSampleRef.current?.getBoundingClientRect().width;
-      setLayout({
-        w: window.innerWidth,
-        h: window.innerHeight,
-        en: en || 60,
-        ar: ar || 60,
-      });
+      setSize({ w: window.innerWidth, h: window.innerHeight });
     };
     measure();
-    window.addEventListener("resize", measure);
-    return () => window.removeEventListener("resize", measure);
+    let raf = 0;
+    const onResize = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(measure);
+    };
+    window.addEventListener("resize", onResize);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("resize", onResize);
+    };
   }, []);
 
-  const band = Math.max(layout.w, layout.h) * 3;
-  const rows = Math.min(260, Math.ceil((layout.w + layout.h) / STEP) + 12);
-  const enRepeats = Math.min(320, Math.ceil(band / layout.en) + 8);
-  const arRepeats = Math.min(320, Math.ceil(band / layout.ar) + 8);
+  const { w, h } = size;
+  const colors = THEME_COLORS[theme] || THEME_COLORS.light;
+  const lines = useMemo(() => buildLines(w, h), [w, h]);
+
+  if (!w || !h) return null;
 
   return (
-    <div
+    <svg
       aria-hidden="true"
-      className="pointer-events-none absolute inset-0 z-0 select-none overflow-hidden"
+      className="pointer-events-none absolute inset-0 z-0 h-full w-full select-none"
+      viewBox={`0 0 ${w} ${h}`}
+      style={{ overflow: "hidden" }}
     >
-      <span ref={enSampleRef} className={cn(enClass, "invisible absolute")}>
-        rawan
-      </span>
-      <span
-        ref={arSampleRef}
-        lang="ar"
-        dir="rtl"
-        className={cn(arClass, "invisible absolute")}
-        style={{ fontFamily: "'Noto Naskh Arabic', 'Geeza Pro', sans-serif" }}
-      >
-        روان
-      </span>
-
-      <div
-        className="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 rotate-[45deg] origin-center flex-col gap-2.5 md:left-0 md:top-0"
-        style={{ width: band }}
-      >
-        {Array.from({ length: rows }).map((_, i) => {
-          const isArabic = i % 2 !== 0;
-          return (
-            <span
-              key={i}
-              lang={isArabic ? "ar" : undefined}
-              dir={isArabic ? "rtl" : undefined}
-              style={
-                isArabic
-                  ? { fontFamily: "'Noto Naskh Arabic', 'Geeza Pro', sans-serif" }
-                  : undefined
-              }
-              className={cn(isArabic ? arClass : enClass)}
-            >
-              {isArabic ? "روان ".repeat(arRepeats) : "rawan ".repeat(enRepeats)}
-            </span>
-          );
-        })}
-      </div>
-    </div>
+      {lines.map(({ isArabic, words }, i) =>
+        words.map(({ x, y }) => (
+          <text
+            key={`${i}-${x}-${y}`}
+            x={x}
+            y={y}
+            textAnchor="middle"
+            transform={`rotate(45 ${x} ${y})`}
+            fontSize="11"
+            fontWeight="700"
+            letterSpacing={isArabic ? "0.18em" : "0.32em"}
+            fill={isArabic ? colors.ar : colors.en}
+            fillOpacity={isArabic ? colors.arOpacity : colors.enOpacity}
+            direction={isArabic ? "rtl" : undefined}
+            fontFamily={isArabic ? AR_FONT : undefined}
+          >
+            {isArabic ? "روان" : "RAWAN"}
+          </text>
+        )),
+      )}
+    </svg>
   );
 }

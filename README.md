@@ -33,8 +33,38 @@ npm install
 npm run dev
 ```
 
-Environment lives in `backend/.env` — see `backend/.env` for `MONGO_URI`,
-`JWT_SECRET`, `CORS_ORIGINS`, `PORT`.
+Environment lives in `backend/.env`:
+
+| Variable                     | Purpose                                        | Default          |
+| ---------------------------- | ---------------------------------------------- | ---------------- |
+| `MONGO_URI`                  | MongoDB connection string                      | _(required)_     |
+| `JWT_SECRET`                 | Token signing secret                           | _(required)_     |
+| `PORT`                       | Backend port                                   | `3000`           |
+| `CORS_ORIGINS`               | Comma-separated allow-list (empty = allow all) | ``               |
+| `TRUST_PROXY`                | `true` when behind a reverse proxy/load balancer | `false`        |
+| `RATE_LIMIT_WINDOW_MS`       | General rate-limit window                      | `900000` (15 min)|
+| `RATE_LIMIT_MAX`             | General request cap per window                 | `100`            |
+| `AUTH_RATE_LIMIT_WINDOW_MS`  | Auth route window                              | `900000` (15 min)|
+| `AUTH_RATE_LIMIT_MAX`        | Auth request cap per window                    | `10`             |
+
+## Tests & production build
+
+```bash
+# Backend tests (node:test — no database needed)
+cd backend
+npm test
+
+# Frontend production bundle + bundle-size analysis (opens dist/stats.html)
+cd frontend
+npm run build
+npm run build:analyze
+```
+
+Set `NODE_ENV=production` on the backend and it will also serve the built
+frontend (`frontend/dist`, SPA fallback included) from the same process as
+`http://localhost:3000` — one deployment, no static host required. Rate-limit
+headers follow the IETF `RateLimit-*` standard, and in-flight requests are
+drained gracefully on `SIGINT`/`SIGTERM`.
 
 ## Repo layout
 

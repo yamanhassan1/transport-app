@@ -1,5 +1,6 @@
 import react from '@vitejs/plugin-react'
 import { defineConfig, loadEnv } from 'vite'
+import { visualizer } from 'rollup-plugin-visualizer'
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
@@ -14,8 +15,13 @@ export default defineConfig(({ mode }) => {
     },
   }
 
+  const plugins = [react(), reactDevTools]
+  if (mode === 'analyze') {
+    plugins.push(visualizer({ open: true, gzipSize: true, filename: 'dist/stats.html' }))
+  }
+
   return {
-    plugins: [react(), reactDevTools],
+    plugins,
     server: {
       proxy: {
         '/users': 'http://localhost:3000',

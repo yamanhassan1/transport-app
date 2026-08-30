@@ -1,4 +1,5 @@
 const http = require("http");
+const mongoose = require("mongoose");
 const app = require("./app");
 
 const PORT = process.env.PORT || 3000;
@@ -6,14 +7,30 @@ const PORT = process.env.PORT || 3000;
 const server = http.createServer(app);
 
 server.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+  console.log(`Server is running on port ${PORT}`);
 });
 
 server.on("error", (err) => {
-    if (err.code === "EADDRINUSE") {
-        console.error(`Port ${PORT} is already in use. Kill the process on port ${PORT} or change PORT in .env.`);
-    } else {
-        throw err;
-    }
-    process.exit(1);
+  if (err.code === "EADDRINUSE") {
+    console.error(`Port ${PORT} is already in use. Kill the process on port ${PORT} or change PORT in .env.`);
+  } else {
+    throw err;
+  }
+  process.exit(1);
 });
+
+function shutdown(signal) {
+  console.log(`${signal} received, shutting down gracefully`);
+  server.close(async () => {
+    try {
+      await mongoose.disconnect();
+      console.log("MongoDB disconnected");
+    } finally {
+      process.exit(0);
+    }
+  });
+  setTimeout(() => process.exit(1), 10000).unref();
+}
+
+process.on("SIGINT", () => shutdown("SIGINT"));
+process.on("SIGTERM", () => shutdown("SIGTERM"));
