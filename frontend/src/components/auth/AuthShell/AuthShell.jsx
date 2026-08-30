@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { motion, useReducedMotion } from "motion/react";
 import { Logo } from "../../ui/Logo/Logo.jsx";
+import RawanPattern from "../../ui/RawanPattern/RawanPattern.jsx";
 
 const content = {
   login: {
@@ -22,9 +23,10 @@ export default function AuthShell({ mode, children }) {
   const copy = content[mode];
 
   return (
-    <div className="flex min-h-svh flex-col items-center justify-center bg-[var(--background)] px-4 py-10 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] md:py-12">
+    <div className="relative flex min-h-svh flex-col items-center justify-center overflow-hidden bg-[var(--background)] px-4 py-10 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] md:py-12">
+      <RawanPattern />
       <motion.div
-        className="flex w-full max-w-md flex-col"
+        className="relative z-10 flex w-full max-w-md flex-col"
         initial={{ opacity: 0, y: reduce ? 0 : 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
@@ -46,7 +48,7 @@ export default function AuthShell({ mode, children }) {
           <p className="mt-2 text-body text-ink-secondary">{copy.subtitle}</p>
         </div>
 
-        <div className="md:rounded-2xl md:border md:border-line md:bg-surface md:p-6 md:shadow-md">
+        <div className="rounded-2xl border border-line bg-surface p-4 shadow-sm sm:p-6">
           {children}
         </div>
 

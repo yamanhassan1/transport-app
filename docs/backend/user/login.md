@@ -27,7 +27,7 @@ and returns a signed JWT alongside the authenticated user resource.
 | Parameter  | Type   | Required | Constraints                                     |
 | ---------- | ------ | -------- | ----------------------------------------------- |
 | `email`    | string | No*      | Valid email; lowercased before lookup           |
-| `phone`    | string | No*      | Valid mobile number                             |
+| `phone`    | string | No*      | International `+` + 7–15 digits                 |
 | `password` | string | Yes      | Minimum length of 6 characters                  |
 
 > \* At least one of `email` or `phone` is required (enforced by a
@@ -58,7 +58,7 @@ Validation is performed at the route layer via `express-validator` prior to
 executing the controller:
 
 - `email` (optional) must be a valid email address (and is lowercased).
-- `phone` (optional) must be a valid mobile phone number.
+- `phone` (optional) must be an international number (`+` plus 7–15 digits).
 - `password` must be at least 6 characters.
 - A `body().custom` check rejects the request unless `email` **or** `phone` is present.
 
@@ -151,7 +151,7 @@ The `POST /login` route registers `express-validator` middleware that
 enforces the following prior to invoking the controller:
 
 - `email` (optional) is a valid email (`isEmail`) and is lowercased (`toLowerCase`)
-- `phone` (optional) is a valid mobile number
+- `phone` (optional) matches `^\+\d{7,15}$`
 - `password` length ≥ 6
 - exactly one of `email` / `phone` required (custom `body()` check)
 
@@ -171,7 +171,8 @@ The `loginUser` controller:
 4. Returns `401` if no user is found.
 5. Calls `user.comparePassword(password)` to verify the bcrypt hash.
 6. Returns `401` if the password does not match.
-7. Issues a JWT via `user.generateAuthToken()`.
+7. Updates `lastLoginAt`, persists the account, and issues a JWT via
+   `user.generateAuthToken()`.
 8. Stores the token as an `httpOnly` `token` cookie (`SameSite=Lax` in dev;
    `Secure` with `SameSite=None` in production; 24h TTL) and clears
    `user.password`.

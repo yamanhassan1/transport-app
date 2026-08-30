@@ -30,7 +30,7 @@ captain resource.
 | `fullname.firstName`     | string | Yes      | 2–50 characters (shorter than user's 3 — captains)      |
 | `fullname.lastName`      | string | Yes      | 2–50 characters (required for captains)                 |
 | `email`                  | string | Yes      | Valid email; unique; lowercased                         |
-| `phone`                  | string | Yes      | Valid mobile number; unique                             |
+| `phone`                  | string | Yes      | International `+` + 7–15 digits; unique         |
 | `password`               | string | Yes      | Minimum length of 6 characters                          |
 | `vehicle.vehicleType`    | string | Yes      | One of `bike`, `rickshaw`, `car`, `premium`, `go`, `go_mini`, `go_sedan` |
 | `vehicle.make`           | string | Yes      |                                                         |
@@ -64,8 +64,8 @@ captain resource.
 #### Validation
 
 Route layer, `express-validator` (see `backend/routes/captain.routes.js`):
-firstName/lastName 2–50, valid email (normalized + lowercased), valid mobile
-phone, password ≥ 6, `vehicleType` in the enum, `make`/`model`/`color` non-empty,
+firstName/lastName 2–50, valid email (normalized + lowercased), phone as an
+international `+` + 7–15-digit string, password ≥ 6, `vehicleType` in the enum, `make`/`model`/`color` non-empty,
 `year` integer 1886–next year, `plateNumber` 3–15 **uppercased**,
 `license.number` 5–30, `license.expiryDate` ISO 8601. Failures return `400`.
 

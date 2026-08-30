@@ -28,7 +28,8 @@ docs (`docs/backend/user/*`, `docs/backend/captain/*`).
 ## Shared
 
 - [`design-system.md`](design-system.md) — tokens, buttons, navbar, logo,
-  icons/PWA, theme, toasts, motion (used by both roles).
+  icons/PWA, `VehicleSymbol` glyphs, responsive layout (mobile = bottom-nav
+  only, no topbar/sidebar), theme, toasts, motion (used by both roles).
 
 ## Routing table
 

@@ -87,6 +87,33 @@ CTAs, login/register submits):
 - `public/manifest.webmanifest` + favicon/apple-touch/manifest links in
   `index.html`.
 
+## Symbol graphics (no photos)
+
+Landing/hero art uses **illustrated symbol graphics**, not stock photos, to
+match Uber / inDrive:
+
+- `VehicleSymbol` (`components/ui/VehicleSymbol/VehicleSymbol.jsx`) — own drawn
+  line-art `SVG` glyphs on a shared `240×140` viewBox: sedan **`car`**, hatch
+  **`mini`**, **`premium`** (sedan + sparkle), **`bike`** (road bike), and
+  **`box`** (parcel with tape + send arrow for **Shipment**).
+- Drawn live with `stroke="currentColor"` (colored via Tailwind `text-*`,
+  e.g. `text-white`, `text-white/10` ghost) — no raster images, no external
+  requests, no download cost.
+- Recurring motif: a large rotated **ghost** `VehicleSymbol` in the tile corner,
+  soft `bg-white/10` glow rings + a dashed **route-path SVG** with endpoint pins
+  in the hero panel.
+- Service tints: Go = sky, Go Mini = amber, **Shipment = violet/purple**,
+  Premier = slate, Bike = emerald.
+- Rule: **the landing never displays prices** — fare chips and price badges are
+  intentionally omitted.
+
+## Responsive layout
+
+- Mobile (`< md`): **topbar (Header) and sidebar are hidden** — navigation is the
+  floating bottom nav only; every page renders its own heading.
+- Desktop (`md+`): sidebar (brand + nav + account) at `w-60`, sticky header with
+  title/brand + auth actions, `PageContainer` capped at 1440px.
+
 ## Theme
 
 - `ThemeContext` — `theme` (`light`/`dark`/`system`) + `toggleTheme()`; applied

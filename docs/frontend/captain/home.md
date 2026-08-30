@@ -11,8 +11,9 @@ what changes for a signed-in captain.
 ### Hero (signed-in)
 
 - `Hello, {firstName}` greeting chip appears (same as any authenticated user).
-- Primary CTA **"Go to your profile"** → `/profile`.
-- Secondary CTA **"Account settings"** → `/settings`.
+- Hero **Continue** button → `/profile` (instead of `/register` for guests).
+- Secondary button **"Account settings"** → `/settings` (instead of the guest
+  "Log in" → `/login`).
 
 ### Drive banner
 

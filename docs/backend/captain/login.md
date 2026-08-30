@@ -120,9 +120,10 @@ curl -X POST http://localhost:3000/captains/login \
 
 The flow is the same as the user login: route validation → controller
 (re-check `validationResult`, query by the supplied field with
-`select("+password")`, compare bcrypt, `401` on mismatch, sign a JWT with
-`JWT_SECRET`, set the `token` httpOnly cookie — `SameSite=Lax` in dev,
-`Secure` + `SameSite=None` in production, 24h TTL) → respond `{ token, captain }`.
+`select("+password")`, compare bcrypt, `401` on mismatch, stamp `lastLoginAt`
+on the account, sign a JWT with `JWT_SECRET`, set the `token` httpOnly cookie —
+`SameSite=Lax` in dev, `Secure` + `SameSite=None` in production, 24h TTL) →
+respond `{ token, captain }`.
 
 See [`../user/login.md`](../user/login.md) for the full lifecycle walkthrough,
 flow diagram, and security considerations (password hashing, password exclusion,

@@ -1,6 +1,5 @@
 import { NavLink, useNavigate } from "react-router-dom";
-import { X, Moon, Sun, LogOut, LogIn } from "lucide-react";
-import { AnimatePresence, motion } from "motion/react";
+import { Moon, Sun, LogOut, LogIn } from "lucide-react";
 import { cn } from "../../../lib/cn.js";
 import { dashboardNav } from "../../../lib/nav.js";
 import { Logo } from "../../ui/Logo/Logo.jsx";
@@ -114,55 +113,14 @@ function AccountSection() {
   );
 }
 
-export default function Sidebar({ mobileOpen, onClose }) {
+export default function Sidebar() {
   return (
-    <>
-      {/* Desktop persistent sidebar */}
-      <aside className="hidden w-60 shrink-0 flex-col gap-6 border-r border-line bg-surface md:flex">
-        <div className="flex h-16 items-center px-3">
-          <Brand />
-        </div>
-        <SidebarLinks />
-        <AccountSection />
-      </aside>
-
-      {/* Mobile drawer */}
-      <AnimatePresence>
-        {mobileOpen && (
-          <div className="fixed inset-0 z-[300] md:hidden">
-            <motion.button
-              type="button"
-              aria-label="Close menu"
-              className="absolute inset-0 bg-gray-900/45"
-              onClick={onClose}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-            />
-            <motion.div
-              className="absolute inset-y-0 left-0 flex w-[280px] flex-col gap-6 border-r border-line bg-surface p-4 shadow-lg"
-              initial={{ x: "-100%" }}
-              animate={{ x: 0 }}
-              exit={{ x: "-100%" }}
-              transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-            >
-              <div className="flex items-center justify-between pt-[env(safe-area-inset-top)]">
-                <Brand />
-                <button
-                  type="button"
-                  aria-label="Close menu"
-                  onClick={onClose}
-                  className="tap-target flex h-10 w-10 items-center justify-center rounded-[10px] text-ink-muted hover:bg-gray-100 dark:hover:bg-gray-700/40"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
-              <SidebarLinks onNavigate={onClose} />
-              <AccountSection />
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-    </>
+    <aside className="hidden w-60 shrink-0 flex-col gap-6 border-r border-line bg-surface md:flex">
+      <div className="flex h-16 items-center px-3">
+        <Brand />
+      </div>
+      <SidebarLinks />
+      <AccountSection />
+    </aside>
   );
 }

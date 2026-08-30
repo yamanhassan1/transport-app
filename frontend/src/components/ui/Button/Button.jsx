@@ -11,7 +11,9 @@ const base = cn(
 
 const variants = {
   primary:
-    "bg-gradient-to-b from-primary-500 to-primary-700 text-white shadow-md shadow-primary/25 hover:from-primary-400 hover:to-primary-700 hover:shadow-lg hover:shadow-primary/30",
+    "bg-primary-600 text-white shadow-sm transition-all hover:bg-primary-700",
+  amber:
+    "bg-amber-700 text-white shadow-sm transition-all hover:bg-amber-800",
   secondary:
     "border border-line bg-surface text-gray-800 shadow-sm hover:bg-gray-50 dark:text-gray-100 dark:hover:bg-gray-700/40",
   danger: "bg-error text-white shadow-sm hover:bg-error-700",

@@ -75,6 +75,9 @@ module.exports.loginCaptain = async (req, res, next) => {
       return res.status(401).json({ message: "Invalid email or password" });
     }
 
+    captain.lastLoginAt = new Date();
+    await captain.save();
+
     const token = captain.generateAuthToken();
 
     res.cookie("token", token, cookieOptions());

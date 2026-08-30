@@ -1,11 +1,11 @@
 import { Link, useNavigate } from "react-router-dom";
-import { LogOut, Menu } from "lucide-react";
+import { LogOut } from "lucide-react";
 import { LogoMark } from "../../ui/Logo/Logo.jsx";
 import { useAuth } from "../../../context/AuthContext.jsx";
 import { useToast } from "../../../context/ToastContext.jsx";
 import { firstName, initials } from "../../../lib/format.js";
 
-export default function Header({ title, subtitle, onOpenMenu }) {
+export default function Header({ title, subtitle }) {
   const navigate = useNavigate();
   const { account, isAuthenticated, logout } = useAuth();
   const { toast } = useToast();
@@ -17,20 +17,9 @@ export default function Header({ title, subtitle, onOpenMenu }) {
   };
 
   return (
-    <header className="sticky top-0 z-[200] border-b border-line bg-surface/90 backdrop-blur pt-[env(safe-area-inset-top)]">
+    <header className="border-b border-line bg-surface/90 backdrop-blur">
       <div className="container-page flex h-16 items-center gap-2.5 px-3.5 md:gap-3 md:px-6">
-        {/* Mobile menu */}
-        <button
-          type="button"
-          aria-label="Open menu"
-          onClick={onOpenMenu}
-          className="tap-target -ml-2 inline-flex h-11 w-11 items-center justify-center rounded-[10px] text-ink hover:bg-gray-100 dark:hover:bg-gray-700/40 md:hidden"
-        >
-          <Menu className="h-6 w-6" aria-hidden="true" />
-        </button>
-
-        {/* Mobile brand — mark only so the header fits small screens */}
-        <Link to="/" className="flex items-center md:hidden" aria-label="rawan home">
+        <Link to="/" className="flex items-center" aria-label="rawan home">
           <LogoMark />
         </Link>
 

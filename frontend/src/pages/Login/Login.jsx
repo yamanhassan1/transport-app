@@ -1,8 +1,17 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
-import { AlertCircle, Eye, EyeOff, LogIn, Mail, ShieldCheck } from "lucide-react";
+import {
+  AlertCircle,
+  ArrowLeft,
+  ArrowRight,
+  Eye,
+  EyeOff,
+  LogIn,
+  Mail,
+  ShieldCheck,
+  UserRound,
+} from "lucide-react";
 import AuthShell from "../../components/auth/AuthShell/AuthShell.jsx";
-import ModeToggle from "../../components/auth/ModeToggle/ModeToggle.jsx";
 import Input from "../../components/ui/Input/Input.jsx";
 import PhoneInput from "../../components/ui/PhoneInput/PhoneInput.jsx";
 import Button from "../../components/ui/Button/Button.jsx";
@@ -49,6 +58,9 @@ function AppleIcon({ className }) {
 const socialButtonBase =
   "inline-flex h-12 w-full items-center justify-center gap-2.5 rounded-full text-[15px] font-semibold transition-all active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
 
+const roleCardBase =
+  "flex w-full items-center gap-4 rounded-2xl px-5 py-4 text-left transition-all duration-200 active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
+
 export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -56,7 +68,11 @@ export default function Login() {
   const { login, isAuthenticated, role } = useAuth();
   const { toast } = useToast();
 
-  const [mode, setMode] = useState(searchParams.get("mode") === "captain" ? "captain" : "user");
+  const hasModeParam =
+    searchParams.get("mode") === "user" || searchParams.get("mode") === "captain";
+
+  const [mode, setMode] = useState(hasModeParam ? searchParams.get("mode") : "user");
+  const [picked, setPicked] = useState(hasModeParam);
   const [method, setMethod] = useState("phone");
   const [code, setCode] = useState("+92");
   const [phone, setPhone] = useState("");
@@ -74,6 +90,12 @@ export default function Login() {
 
   const isCaptain = mode === "captain";
   const isPhone = method === "phone";
+
+  const handlePick = (next) => {
+    setMode(next);
+    setPicked(true);
+    setFormError("");
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -124,119 +146,197 @@ export default function Login() {
 
   return (
     <AuthShell mode="login">
-      <form className="flex flex-col gap-4" onSubmit={handleSubmit} noValidate>
-        <ModeToggle value={mode} onChange={setMode} />
-
-        {formError && (
-          <p
-            role="alert"
-            className="flex items-start gap-2 rounded-[10px] bg-error-light px-3.5 py-2.5 text-small font-medium text-error-800"
-          >
-            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
-            {formError}
+      {!picked ? (
+        <div className="flex flex-col gap-3">
+          <p className="mb-1 text-center text-body text-ink-secondary">
+            Choose your account to continue.
           </p>
-        )}
 
-        <div className="flex flex-col gap-2.5">
           <button
             type="button"
-            onClick={() => handleSocial("Google")}
+            onClick={() => handlePick("user")}
             className={cn(
-              socialButtonBase,
-              "border border-line bg-white text-gray-800 shadow-sm hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700",
+              roleCardBase,
+              "bg-primary-600 text-white shadow-sm hover:bg-primary-700",
             )}
           >
-            <GoogleIcon className="h-5 w-5" />
-            Continue with Google
+            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[14px] bg-white/20">
+              <UserRound className="h-6 w-6" aria-hidden="true" />
+            </span>
+            <span className="flex flex-1 flex-col">
+              <span className="text-[17px] font-bold leading-tight">Log in as Rider</span>
+              <span className="text-[13px] text-white/80">Book a ride</span>
+            </span>
+            <ArrowRight className="h-5 w-5 shrink-0 text-white/70" aria-hidden="true" />
           </button>
+
           <button
             type="button"
-            onClick={() => handleSocial("Apple")}
+            onClick={() => handlePick("captain")}
             className={cn(
-              socialButtonBase,
-              "bg-gray-900 text-white shadow-sm hover:bg-black dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200",
+              roleCardBase,
+              "bg-amber-700 text-white shadow-sm hover:bg-amber-800",
             )}
           >
-            <AppleIcon className="h-5 w-5" />
-            Continue with Apple
+            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[14px] bg-white/20">
+              <ShieldCheck className="h-6 w-6" aria-hidden="true" />
+            </span>
+            <span className="flex flex-1 flex-col">
+              <span className="text-[17px] font-bold leading-tight">Log in as Captain</span>
+              <span className="text-[13px] text-white/80">Drive &amp; earn</span>
+            </span>
+            <ArrowRight className="h-5 w-5 shrink-0 text-white/70" aria-hidden="true" />
           </button>
         </div>
-
-        <div className="flex items-center gap-3" aria-hidden="true">
-          <span className="h-px flex-1 bg-line" />
-          <span className="text-caption font-medium uppercase tracking-wide text-ink-muted">
-            or log in with
-          </span>
-          <span className="h-px flex-1 bg-line" />
-        </div>
-
-        {isPhone ? (
-          <PhoneInput
-            label="Phone number"
-            hint="We'll match this to your account."
-            placeholder="300 1234567"
-            value={phone}
-            onChange={setPhone}
-            code={code}
-            onCodeChange={setCode}
-          />
-        ) : (
-          <Input
-            label="Email"
-            type="email"
-            autoComplete="email"
-            placeholder={isCaptain ? "captain@example.com" : "you@example.com"}
-            leftIcon={Mail}
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-        )}
-
-        <Input
-          label="Password"
-          type={showPassword ? "text" : "password"}
-          autoComplete="current-password"
-          placeholder="At least 6 characters"
-          leftIcon={isCaptain ? ShieldCheck : LogIn}
-          interactiveRight
-          rightIcon={
+      ) : (
+        <form className="flex flex-col gap-4" onSubmit={handleSubmit} noValidate>
+          <div className="mb-1 flex items-center justify-between">
+            <p className="flex items-center gap-1.5 text-[15px] font-semibold text-ink">
+              {isCaptain ? (
+                <ShieldCheck className="h-[18px] w-[18px] text-amber-600 dark:text-amber-400" aria-hidden="true" />
+              ) : (
+                <UserRound className="h-[18px] w-[18px] text-primary-700 dark:text-primary-400" aria-hidden="true" />
+              )}
+              {isCaptain ? "Captain login" : "Rider login"}
+            </p>
             <button
               type="button"
-              aria-label={showPassword ? "Hide password" : "Show password"}
-              onMouseDown={(ev) => {
-                ev.preventDefault();
-                setShowPassword((v) => !v);
+              onClick={() => {
+                setPicked(false);
+                setFormError("");
               }}
-              className="tap-target inline-flex items-center justify-center rounded-[10px] px-2 text-ink-muted hover:text-ink"
+              className="inline-flex items-center gap-1 text-small font-semibold text-ink-muted transition-colors hover:text-ink"
             >
-              {showPassword ? (
-                <EyeOff className="h-5 w-5" aria-hidden="true" />
-              ) : (
-                <Eye className="h-5 w-5" aria-hidden="true" />
-              )}
+              <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+              Switch role
             </button>
-          }
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
+          </div>
 
-        <button
-          type="button"
-          onClick={() => {
-            setMethod((m) => (m === "phone" ? "email" : "phone"));
-            setFormError("");
-          }}
-          className="self-start text-small font-semibold text-primary-700 transition-colors hover:text-primary-800 dark:text-primary-400 dark:hover:text-primary-300"
-        >
-          {isPhone ? "Use email instead" : "Use phone number instead"}
-        </button>
+          {formError && (
+            <p
+              role="alert"
+              className="flex items-start gap-2 rounded-[10px] bg-error-light px-3.5 py-2.5 text-small font-medium text-error-800"
+            >
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+              {formError}
+            </p>
+          )}
 
-        <Button type="submit" size="lg" className="mt-1 w-full" loading={submitting}>
-          {submitting ? "Logging in…" : isCaptain ? "Log in as captain" : "Log in"}
-        </Button>
-      </form>
+          <div className="flex flex-col gap-2.5">
+            <button
+              type="button"
+              onClick={() => handleSocial("Google")}
+              className={cn(
+                socialButtonBase,
+                "border border-line bg-white text-gray-800 shadow-sm hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700",
+              )}
+            >
+              <GoogleIcon className="h-5 w-5" />
+              Continue with Google
+            </button>
+            <button
+              type="button"
+              onClick={() => handleSocial("Apple")}
+              className={cn(
+                socialButtonBase,
+                "bg-gray-900 text-white shadow-sm hover:bg-black dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200",
+              )}
+            >
+              <AppleIcon className="h-5 w-5" />
+              Continue with Apple
+            </button>
+          </div>
+
+          <div className="flex items-center gap-3" aria-hidden="true">
+            <span className="h-px flex-1 bg-line" />
+            <span className="text-caption font-medium uppercase tracking-wide text-ink-muted">
+              or log in with
+            </span>
+            <span className="h-px flex-1 bg-line" />
+          </div>
+
+          {isPhone ? (
+            <PhoneInput
+              label="Phone number"
+              hint="We'll match this to your account."
+              placeholder="300 1234567"
+              value={phone}
+              onChange={setPhone}
+              code={code}
+              onCodeChange={setCode}
+            />
+          ) : (
+            <Input
+              label="Email"
+              type="email"
+              autoComplete="email"
+              placeholder={isCaptain ? "captain@example.com" : "you@example.com"}
+              leftIcon={Mail}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          )}
+
+          <Input
+            label="Password"
+            type={showPassword ? "text" : "password"}
+            autoComplete="current-password"
+            placeholder="At least 6 characters"
+            leftIcon={isCaptain ? ShieldCheck : LogIn}
+            interactiveRight
+            rightIcon={
+              <button
+                type="button"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                onMouseDown={(ev) => {
+                  ev.preventDefault();
+                  setShowPassword((v) => !v);
+                }}
+                className="tap-target inline-flex items-center justify-center rounded-[10px] px-2 text-ink-muted hover:text-ink"
+              >
+                {showPassword ? (
+                  <EyeOff className="h-5 w-5" aria-hidden="true" />
+                ) : (
+                  <Eye className="h-5 w-5" aria-hidden="true" />
+                )}
+              </button>
+            }
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+
+          <button
+            type="button"
+            onClick={() => {
+              setMethod((m) => (m === "phone" ? "email" : "phone"));
+              setFormError("");
+            }}
+            className="self-start text-small font-semibold text-primary-700 transition-colors hover:text-primary-800 dark:text-primary-400 dark:hover:text-primary-300"
+          >
+            {isPhone ? "Use email instead" : "Use phone number instead"}
+          </button>
+
+          <Button
+            type="submit"
+            size="lg"
+            variant={isCaptain ? "amber" : "primary"}
+            className="mt-1 w-full"
+            loading={submitting}
+          >
+            {submitting ? "Logging in…" : isCaptain ? "Log in as captain" : "Log in"}
+          </Button>
+
+          {formError && (
+            <p className="-mt-2 text-center text-caption text-ink-muted">
+              {isCaptain
+                ? "Not registered yet? Create a captain account instead."
+                : "New to rawan? Create your rider account."}
+            </p>
+          )}
+        </form>
+      )}
     </AuthShell>
   );
 }

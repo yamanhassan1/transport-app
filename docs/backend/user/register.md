@@ -53,7 +53,7 @@ executing the controller:
 
 - `fullname.firstName` must be between 3 and 50 characters.
 - `email` must be a valid email address.
-- `phone` must be a valid mobile number.
+- `phone` must be an international number (`+` plus 7–15 digits, e.g. `+923001234567`).
 - `password` must be at least 6 characters.
 
 Validation failures result in an immediate `400` response enumerating the errors.
@@ -147,7 +147,7 @@ enforces the following prior to invoking the controller:
 
 - `fullname.firstName` length 3–50
 - `email` is a valid email (`isEmail`)
-- `phone` is a valid mobile number
+- `phone` matches `^\+\d{7,15}$` (international `+` + 7–15 digits)
 - `password` length ≥ 6
 
 If validation fails, the router short-circuits with `400` and an array of

@@ -66,6 +66,9 @@ module.exports.loginUser = async (req, res, next) => {
       return res.status(401).json({ message: "Invalid email or password" });
     }
 
+    user.lastLoginAt = new Date();
+    await user.save();
+
     const token = user.generateAuthToken();
 
     res.cookie("token", token, cookieOptions());

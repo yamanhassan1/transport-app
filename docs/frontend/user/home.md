@@ -2,68 +2,92 @@
 
 ## Summary
 
-The public landing page at `/` (`Home.jsx`). It is role-aware: guests see
-sign-up/log-in CTAs, a signed-in rider sees a greeting chip and profile/settings
-shortcuts, and the drive-now banner links a rider to the **captain** sign-up.
+The landing page at `/` (`Home.jsx`) — a ride-hailing landing in the style of
+Uber / inDrive. It uses **illustrated symbol graphics** (custom drawn line-art
+vehicle glyphs on vivid gradient tiles, a dashed-route hero) instead of photos,
+a ride-booking card with a **Continue** button and a **Log in** button directly
+beneath it, five service category symbols (**including Shipment**), and a
+drive-now banner. **No prices are shown anywhere.** Role-aware: guests get the
+full landing; a signed-in rider sees their name and app-shortcut CTAs.
 
 ## Page
 
 - **Route:** `/` (public)
 - **Component:** `Home.jsx` (`frontend/src/pages/Home/Home.jsx`)
-- **Animations:** `motion/react` — hero fades/slides in, feature tiles
-  `whileInView`; disabled via `prefers-reduced-motion`.
+- **Animations:** `motion/react` hero entrance + `whileInView` service/feature tiles.
+- **Graphics:** `VehicleSymbol` line-art SVG glyphs (`components/ui/VehicleSymbol`)
+  drawn live in white over brand gradients — no raster images, no external
+  requests. Service tiles use rotated "ghost" symbols, soft glow rings and a
+  dashed-route SVG flourish.
+
+### Mobile layout note
+
+On phones (`< md`): the **header (topbar) and sidebar are removed entirely**;
+guests/signed-in users navigate with the floating bottom nav (Home / Profile /
+Settings). Each page renders its own `<h1>`, so no heading is lost. Desktop
+(`md+`) keeps the sidebar + header as usual.
 
 ## Sections
 
-### 1. Hero (guest)
+### 1. Hero + booking card
 
-- Headline: **Ride any way, anywhere.**
-- Sub copy about safe, quick rides with upfront fares.
-- **Create your free account** (gradient pill) → `/register`
-- **Log in** (outline pill) → `/login`
+Two-column on desktop (text left, symbol graphic right); single column on mobile.
 
-### 2. Hero (signed-in rider)
+- Headline: **"Book a ride in minutes."** (guests) /
+  **"Where to, {name}?"** (signed-in, plus the "Hello, {name}" chip above).
+- **Booking card** — the Uber-style "where to?" card:
+  - Two rounded destination fields ("Where to?" / "Enter your destination")
+    with numbered pins + quick chips (Home, Work, Airport).
+  - **Continue** button — primary gradient pill, `ArrowRight` icon
+    → **`/register`** for guests (or `/profile` if already signed in).
+  - Below it: **Log in** button — outline pill **→ `/login`** for guests
+    (or "Account settings" → `/settings` when signed in).
+  - Small helper note for guests:
+    "Continue creates your free account after you enter your details."
+- **Hero symbol graphic** (desktop only): brand-green `rounded-[28px]` panel
+  with a dashed route path (SVG) + endpoint pins, speed-dash accents, a large
+  `VehicleSymbol` sedan with a glow halo, and bottom chips. Floating glass chips:
+  - **"Captains nearby"** with a live green-dot icon — "4 min average pickup",
+  - **"24/7 support"** — "Phone & chat, always on".
 
-- `Hello, {firstName}` chip (pill, `bg-primary-100`, ShieldCheck icon) rendered
-  above the headline.
-- Primary CTA becomes **"Go to your profile"** → `/profile`.
-- Secondary CTA becomes **"Account settings"** → `/settings`.
+### 2. Ride with rawan — service symbols
 
-The name comes from `firstName(account)` (`lib/format.js`).
+Heading "Ride with rawan". Five symbol tiles in a responsive grid
+(`sm:grid-cols-2 lg:grid-cols-5`) — **no prices**:
 
-### 3. Brand panel
+| Service   | Symbol glyph   | Gradient            | Tag              | Hints                   |
+| --------- | -------------- | ------------------- | ---------------- | ----------------------- |
+| Go        | sedan (`car`)  | sky 500 → 700       | 4 seats          | Everyday rides          |
+| Go Mini   | hatch (`mini`) | amber 500 → orange 700 | 4 seats       | Quick & budget-friendly |
+| Shipment  | parcel (`box`) | violet 500 → purple 700 | up to 10 kg   | Send parcels fast       |
+| Premier   | `premium`      | slate 600 → 800     | 4 seats          | High-end comfort        |
+| Bike      | `bike`         | emerald 500 → teal 700 | 1 seat        | Zip through traffic     |
 
-Right-hand column: the Arabic wordmark **روان** featured large in brand green
-(`lang="ar" dir="rtl"`) above the copy
-"One account for riders and captains — register, log in, and manage your
-profile from anywhere."
+Each tile: `aspect-[16/11]` gradient with a rotated ghost `VehicleSymbol` in the
+corner, a centered white glyph, a translucent tag badge, and label/hint with an
+`ArrowRight` affordance.
 
-### 4. Features
+### 3. Feature badges
 
-Four tiles (Clock · Wallet · ShieldCheck · Star):
+The app's trust symbols as tiles (flat on mobile, cards at `md:`):
 
-| Title                 | Copy                                        |
-| --------------------- | ------------------------------------------- |
-| Minute pickup         | Nearby captains reach you in minutes…       |
-| Transparent fares     | See your fare before you book…              |
-| Verified captains     | Every captain and vehicle is verified…      |
-| Rated rides           | Rate every trip and keep the community…     |
+- Clock — Minute pickup
+- Wallet — Transparent fares
+- ShieldCheck — Verified captains
+- Star — Rated rides
 
-Sticky-safe responsive styling: flat/full-bleed on mobile (`rounded-none border-0
-bg-transparent shadow-none`), card chrome at `md:`.
+### 4. Drive banner
 
-### 5. Drive banner
-
-Brand-green block (`bg-primary-800`): **Drive on your own schedule** with copy
-"Register as a captain with your vehicle and license details in minutes."
-
-- For a **rider or guest** the button reads **"Become a captain"** → links to
-  **`/register?mode=captain`** so a signed-in rider can open a captain account
-  from the same session.
-- For a **captain** it changes (see `docs/frontend/captain/home.md`).
+Brand-green panel with a **graphic** profile (giant faint `VehicleSymbol`
+silhouette + rings) and **Drive on your own schedule** copy. For a rider/guest
+the button reads **"Become a captain"** → `/register?mode=captain`; for a
+signed-in captain it becomes **"View captain profile"** → `/profile`
+(see `../captain/home.md`).
 
 ## Source layout
 
-- `frontend/src/pages/Home/Home.jsx`
+- `frontend/src/pages/Home/Home.jsx` — sections, `ServiceCard` helper, service
+  symbol map (variant + tint + tag), role-aware CTAs
+- `frontend/src/components/ui/VehicleSymbol/VehicleSymbol.jsx` — line-art glyphs
+  (`car`, `mini`, `premium`, `bike`, `box`)
 - `frontend/src/lib/format.js` — `firstName(account)`
-- `frontend/src/components/ui/Logo` and `public/logo.svg` — brand mark used via the sidebar/AuthShell

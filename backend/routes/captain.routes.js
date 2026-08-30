@@ -25,7 +25,7 @@ router.post("/register", authLimiter, [
   body("phone")
     .notEmpty()
     .withMessage("Phone is required")
-    .isMobilePhone()
+    .matches(/^\+\d{7,15}$/)
     .withMessage("Invalid phone number"),
   body("password")
     .isLength({ min: 6 })
@@ -69,7 +69,7 @@ router.post("/register", authLimiter, [
 
 router.post("/login", authLimiter, [
   body("email").optional().isEmail().withMessage("Invalid Email").toLowerCase(),
-  body("phone").optional().isMobilePhone().withMessage("Invalid phone number"),
+  body("phone").optional().matches(/^\+\d{7,15}$/).withMessage("Invalid phone number"),
   body("password").isLength({ min: 6 }).withMessage("Password must be at least 6 characters long"),
   body().custom((_, { req }) => {
     if (!req.body.email && !req.body.phone) {

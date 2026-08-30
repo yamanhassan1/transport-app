@@ -5,9 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:devtools": "vite --mode devtools",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "devtools": "react-devtools"
   },
   "dependencies": {
     "lucide-react": "^1.37.0",
@@ -27,6 +29,7 @@
     "eslint-plugin-react-refresh": "^0.5.4",
     "globals": "^17.11.0",
     "postcss": "^8.5.26",
+    "react-devtools": "^7.0.1",
     "tailwindcss": "^3.4.19",
     "vite": "^8.2.2"
   },

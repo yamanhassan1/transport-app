@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import {
   AlertCircle,
+  ArrowLeft,
   ArrowRight,
   CalendarDays,
   ChevronLeft,
@@ -12,9 +13,9 @@ import {
   Mail,
   ShieldCheck,
   User,
+  UserRound,
 } from "lucide-react";
 import AuthShell from "../../components/auth/AuthShell/AuthShell.jsx";
-import ModeToggle from "../../components/auth/ModeToggle/ModeToggle.jsx";
 import Input from "../../components/ui/Input/Input.jsx";
 import PhoneInput from "../../components/ui/PhoneInput/PhoneInput.jsx";
 import Select from "../../components/ui/Select/Select.jsx";
@@ -77,6 +78,9 @@ const CAPTAIN_STEPS = [
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PHONE_DIGITS_RE = /^\d{7,15}$/;
 
+const roleCardBase =
+  "flex w-full items-center gap-4 rounded-2xl px-5 py-4 text-left transition-all duration-200 active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
+
 const initialForm = {
   firstName: "",
   lastName: "",
@@ -102,6 +106,9 @@ export default function Register() {
   const { toast } = useToast();
 
   const [mode, setMode] = useState(searchParams.get("mode") === "captain" ? "captain" : "user");
+  const hasModeParam =
+    searchParams.get("mode") === "user" || searchParams.get("mode") === "captain";
+  const [picked, setPicked] = useState(hasModeParam);
   const [form, setForm] = useState(initialForm);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -125,6 +132,11 @@ export default function Register() {
     setStep(0);
     setErrors({});
     setFormError("");
+  };
+
+  const handlePick = (nextMode) => {
+    switchMode(nextMode);
+    setPicked(true);
   };
 
   const set = (key) => (e) => {
@@ -238,7 +250,7 @@ export default function Register() {
           },
           license: {
             number: form.licenseNumber.trim().toUpperCase(),
-            expiryDate: new Date(form.licenseExpiry).toISOString(),
+            expiryDate: new Date(`${form.licenseExpiry}T00:00:00Z`).toISOString(),
           },
         }
       : {
@@ -270,11 +282,67 @@ export default function Register() {
 
   return (
     <AuthShell mode="register">
-      <div className="mb-4">
-        <ModeToggle value={mode} onChange={switchMode} />
-      </div>
+      {!picked ? (
+        <div className="flex flex-col gap-3">
+          <p className="mb-1 text-center text-body text-ink-secondary">
+            Choose your account to continue.
+          </p>
 
-      {/* Step progress */}
+          <button
+            type="button"
+            onClick={() => handlePick("user")}
+            className={cn(roleCardBase, "bg-primary-600 text-white shadow-sm hover:bg-primary-700")}
+          >
+            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[14px] bg-white/20">
+              <UserRound className="h-6 w-6" aria-hidden="true" />
+            </span>
+            <span className="flex flex-1 flex-col">
+              <span className="text-[17px] font-bold leading-tight">Register as Rider</span>
+              <span className="text-[13px] text-white/80">Book a ride</span>
+            </span>
+            <ArrowRight className="h-5 w-5 shrink-0 text-white/70" aria-hidden="true" />
+          </button>
+
+          <button
+            type="button"
+            onClick={() => handlePick("captain")}
+            className={cn(roleCardBase, "bg-amber-700 text-white shadow-sm hover:bg-amber-800")}
+          >
+            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[14px] bg-white/20">
+              <ShieldCheck className="h-6 w-6" aria-hidden="true" />
+            </span>
+            <span className="flex flex-1 flex-col">
+              <span className="text-[17px] font-bold leading-tight">Register as Captain</span>
+              <span className="text-[13px] text-white/80">Drive &amp; earn</span>
+            </span>
+            <ArrowRight className="h-5 w-5 shrink-0 text-white/70" aria-hidden="true" />
+          </button>
+        </div>
+      ) : (
+        <>
+          <div className="mb-4 flex items-center justify-between">
+            <p className="flex items-center gap-1.5 text-[15px] font-semibold text-ink">
+              {isCaptain ? (
+                <ShieldCheck className="h-[18px] w-[18px] text-amber-600 dark:text-amber-400" aria-hidden="true" />
+              ) : (
+                <UserRound className="h-[18px] w-[18px] text-primary-700 dark:text-primary-400" aria-hidden="true" />
+              )}
+              {isCaptain ? "Captain registration" : "Rider registration"}
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                setPicked(false);
+                setFormError("");
+              }}
+              className="inline-flex items-center gap-1 text-small font-semibold text-ink-muted transition-colors hover:text-ink"
+            >
+              <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+              Switch role
+            </button>
+          </div>
+
+          {/* Step progress */}
       <div className="mb-4 flex items-center gap-2">
         <div className="flex flex-1 items-center gap-1.5" aria-hidden="true">
           {steps.map((_, i) => (
@@ -543,7 +611,15 @@ export default function Register() {
                   : "Create account"}
           </Button>
         </div>
-      </form>
+
+        {formError && (
+          <p className="-mt-2 text-center text-caption text-ink-muted">
+            Already have an account? Log in instead.
+          </p>
+        )}
+          </form>
+        </>
+      )}
     </AuthShell>
   );
 }
